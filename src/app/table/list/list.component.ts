@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { ApiService } from 'src/app/services/api.service';
 import { Observable } from 'rxjs';
+import { Table } from 'src/app/table/table.interface';
 
 @Component({
     selector: 'app-list',
@@ -9,7 +10,7 @@ import { Observable } from 'rxjs';
     styleUrls: ['./list.component.scss'],
 })
 export class ListComponent implements OnInit {
-    tables$: Observable<any> | undefined;
+    tables$: Observable<Table[]> | undefined;
 
     constructor(
         private api: ApiService,

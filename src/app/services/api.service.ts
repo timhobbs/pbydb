@@ -1,5 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Table } from 'src/app/table/table.interface';
 
 @Injectable({
     providedIn: 'root',
@@ -11,7 +13,7 @@ export class ApiService {
         private http: HttpClient,
     ) {}
 
-    getTables() {
-        return this.http.get(`${this.apiBase}/table`);
+    getTables(): Observable<Table[]> {
+        return this.http.get(`${this.apiBase}/table`) as Observable<Table[]>;
     }
 }

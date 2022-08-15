@@ -1,8 +1,5 @@
-<mat-sidenav-container>
-    <mat-sidenav>
-        <a *ngFor="let table of tables$ | async">
-            {{table}}
-        </a>
-    </mat-sidenav>
-    <mat-sidenav-content>Main</mat-sidenav-content>
-  </mat-sidenav-container>
+<mat-nav-list class="navlist">
+    <a mat-list-item *ngFor="let table of tables$ | async">
+        {{table.description}}
+    </a>
+</mat-nav-list>
