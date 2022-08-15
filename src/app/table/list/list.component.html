@@ -1,5 +1,12 @@
+<h1>Table List</h1>
+<!-- <mat-form-field appearance="fill">
+    <mat-label>Filter</mat-label>
+    <input type="text" matInput />
+</mat-form-field> -->
 <mat-nav-list class="navlist">
-    <a mat-list-item *ngFor="let table of tables$ | async">
-        {{table.description}}
-    </a>
+    <mat-list-item *ngFor="let table of tables$ | async">
+        <a matLine [routerLink]="['/table', table.id]">
+            {{table.description}}
+        </a>
+    </mat-list-item>
 </mat-nav-list>

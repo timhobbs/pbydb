@@ -16,4 +16,8 @@ export class ApiService {
     getTables(): Observable<Table[]> {
         return this.http.get(`${this.apiBase}/table`) as Observable<Table[]>;
     }
+
+    getTable(id: number): Observable<Table[]> {
+        return this.http.get(`${this.apiBase}/table/${id}`) as Observable<Table[]>;
+    }
 }
