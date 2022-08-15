@@ -26,6 +26,7 @@
         "@types/morgan": "^1.9.3",
         "@types/sqlite3": "^3.1.8",
         "@types/xml2js": "^0.4.11",
+        "angular-star-rating": "^6.0.0",
         "body-parser": "^1.20.0",
         "concurrently": "^7.3.0",
         "express": "^4.18.1",

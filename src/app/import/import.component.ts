@@ -1,15 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { ApiService } from 'src/app/services/api.service';
+import { Component } from '@angular/core';
+import { Table } from 'src/app/table/table.interface';
 
 @Component({
-  selector: 'app-import',
-  templateUrl: './import.component.html',
-  styleUrls: ['./import.component.scss']
+    selector: 'app-import',
+    templateUrl: './import.component.html',
+    styleUrls: ['./import.component.scss'],
 })
-export class ImportComponent implements OnInit {
+export class ImportComponent {
+    results: number = 0;
 
-  constructor() { }
+    constructor(
+        private api: ApiService
+    ) {}
 
-  ngOnInit(): void {
-  }
+    import() {
+        this.api.import().subscribe((tables: Table[]) => {
+            this.results = tables.length;
+        })
+    }
 
+    clear() {
+        this.results = 0;
+    }
 }

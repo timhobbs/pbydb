@@ -1,1 +1,21 @@
-<p>import works!</p>
+<h1>Data Import</h1>
+
+<p>
+    This will import your VPX data from PBY into the is app's database.
+    If you have already imported it will update existing records with any
+    updates you made in PBY as well as add any new tables you entered.
+</p>
+<p>
+    <button *ngIf="!results"
+        mat-flat-button
+        color="primary"
+        (click)="import()"
+    >Import</button>
+    <ng-container *ngIf="results">
+        <p>{{results}} records imported!</p>
+        <button mat-flat-button
+            color="primary"
+            (click)="clear()"
+        >Clear</button>
+    </ng-container>
+</p>

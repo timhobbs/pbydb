@@ -1,10 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { ImportComponent } from 'src/app/import/import.component';
 import { ImportRoutingModule } from 'src/app/import/import-routing.module';
+import { MatButtonModule } from '@angular/material/button';
 import { NgModule } from '@angular/core';
 
 @NgModule({
     declarations: [ImportComponent],
-    imports: [CommonModule, ImportRoutingModule],
+    imports: [
+        CommonModule,
+        ImportRoutingModule,
+        MatButtonModule,
+    ],
 })
 export class ImportModule {}

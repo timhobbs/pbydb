@@ -25,6 +25,11 @@ export class DetailComponent implements OnInit {
         })
     }
 
+    change($event: any, table: Table) {
+        console.log('change', $event, table);
+        table.rating = $event.rating;
+    }
+
     submit(table: Table) {
         this.result = table;
     }

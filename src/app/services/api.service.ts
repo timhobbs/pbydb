@@ -20,4 +20,8 @@ export class ApiService {
     getTable(id: number): Observable<Table[]> {
         return this.http.get(`${this.apiBase}/table/${id}`) as Observable<Table[]>;
     }
+
+    import(): Observable<Table[]> {
+        return this.http.post(`${this.apiBase}/import`, {}) as Observable<Table[]>;
+    }
 }

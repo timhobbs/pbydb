@@ -2,53 +2,49 @@
 
 <ng-container *ngFor="let table of table$ | async">
     <form #tableForm="ngForm" class="details" (ngSubmit)="submit(table)" *ngIf="!result">
-        <h2>{{table.description}}</h2>
-        <p>
-            <mat-form-field appearance="fill">
-                <mat-label>File</mat-label>
-                <input matInput type="text" [value]="table.name"/>
-            </mat-form-field>
-        </p>
-        <p>
-            <mat-form-field appearance="fill">
-                <mat-label>Manufacturer</mat-label>
-                <input matInput type="text" [value]="table.manufacturer"/>
-            </mat-form-field>
-        </p>
-        <p>
-            <mat-form-field appearance="fill">
-                <mat-label>Year</mat-label>
-                <input matInput type="number" [value]="table.year"/>
-            </mat-form-field>
-        </p>
+        <mat-card>
+            <mat-card-title>{{table.description}}</mat-card-title>
+            <mat-card-subtitle>{{table.manufacturer}} {{table.year}}</mat-card-subtitle>
+            <mat-card-content>
+                <p>
+                    <span>File:</span> {{table.name}}
+                </p>
+                <div class="corner">
+                    <star-rating [starType]="'svg'" [rating]="table.rating" (ratingChange)="change($event, table)"></star-rating>
+                    <p>
+                        <a href="https://www.ipdb.org/machine.cgi?id={{table.ipdbid}}">IPDB</a>
+                    </p>
+                </div>
+        </mat-card-content>
+        </mat-card>
         <p>
             <mat-form-field appearance="fill">
                 <mat-label>Type</mat-label>
-                <input matInput type="text" [value]="table.type"/>
+                <input matInput type="text" [(ngModel)]="table.type" name="type"/>
             </mat-form-field>
         </p>
         <p>
             <mat-form-field appearance="fill">
                 <mat-label>ROM</mat-label>
-                <input matInput type="text" [value]="table.rom"/>
-            </mat-form-field>
-        </p>
-        <p>
-            <mat-form-field appearance="fill">
-                <mat-label>Rating</mat-label>
-                <input matInput type="number" [value]="table.rating"/>
+                <input matInput type="text" [(ngModel)]="table.rom" name="rom"/>
             </mat-form-field>
         </p>
         <p>
             <mat-form-field appearance="fill">
                 <mat-label>B2S</mat-label>
-                <input matInput type="number" [value]="table.b2s" [(ngModel)]="table.b2s"/>
+                <input matInput type="number" [(ngModel)]="table.b2s" name="b2s"/>
             </mat-form-field>
         </p>
         <p>
-            <mat-checkbox [(ngModel)]="table.haspup">Has PuP Pack?</mat-checkbox>
+            <mat-form-field appearance="fill">
+                <mat-label>VPSID</mat-label>
+                <input matInput type="text" [(ngModel)]="table.vpsid" name="vpsid"/>
+            </mat-form-field>
         </p>
         <p>
+            <mat-checkbox [(ngModel)]="table.haspup" name="haspup">Has PuP Pack?</mat-checkbox>
+        </p>
+        <p class="button">
             <button mat-flat-button color="primary">Update</button>
         </p>
     </form>
