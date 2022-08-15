@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { GameRoutingModule } from 'src/app/game/game-routing.module';
 import { ListComponent } from './list/list.component';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { NgModule } from '@angular/core';
+import { TableRoutingModule } from 'src/app/table/table-routing.module';
 
 @NgModule({
     declarations: [ListComponent],
     imports: [
         CommonModule,
-        GameRoutingModule,
+        TableRoutingModule,
+        MatSidenavModule,
     ],
 })
-export class GameModule {}
+export class TableModule {}

@@ -18,12 +18,19 @@
         "importHelpers": true,
         "target": "es2020",
         "module": "es2020",
-        "lib": ["es2020", "dom"]
+        "lib": ["es2020", "dom"],
+        "typeRoots": ["node_modules"]
     },
     "angularCompilerOptions": {
         "enableI18nLegacyMessageIdFormat": false,
         "strictInjectionParameters": true,
         "strictInputAccessModifiers": true,
         "strictTemplates": true
+    },
+    "ts-node": {
+        // these options are overrides used only by ts-node
+        "compilerOptions": {
+            "module": "CommonJS"
+        }
     }
 }

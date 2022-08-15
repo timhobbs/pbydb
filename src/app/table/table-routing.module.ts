@@ -1,6 +1,6 @@
 import { RouterModule, Routes } from '@angular/router';
 
-import { ListComponent } from 'src/app/game/list/list.component';
+import { ListComponent } from 'src/app/table/list/list.component';
 import { NgModule } from '@angular/core';
 
 const routes: Routes = [
@@ -11,5 +11,6 @@ const routes: Routes = [
 @NgModule({
     imports: [RouterModule.forChild(routes)],
     exports: [RouterModule],
+    providers: []
 })
-export class GameRoutingModule {}
+export class TableRoutingModule {}
