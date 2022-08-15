@@ -39,7 +39,7 @@ app.get(`${apiBase}/status`, (req, res, next) => {
     return res.status(200).send('OK');
 });
 
-// Get list of tables
+// Get list of tables or table detail
 app.get(`${apiBase}/table/:id?`, (req, res, next) => {
     let sql = 'select * from tables';
     if (req.params.id) {
@@ -58,6 +58,28 @@ app.get(`${apiBase}/table/:id?`, (req, res, next) => {
         }
 
         return res.send(rows);
+    })
+});
+
+app.post(`${apiBase}/table/:id`, (req, res, next) => {
+    const sql = `
+update tables set
+type = '${req.body.type}',
+rom = '${req.body.rom}',
+rating = ${req.body.rating},
+vpsid = '${req.body.vpsid}',
+b2s = '${req.body.b2s}',
+haspup = ${req.body.haspup === true ? 1 : 0}
+where id = ${req.params.id}`;
+
+    db.run(sql, (err) => {
+        if (err) {
+            console.error(`DB update error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        return res.send(true);
     })
 });
 

@@ -9,6 +9,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgModule } from '@angular/core';
 import { StarRatingModule } from 'angular-star-rating';
 import { TableRoutingModule } from 'src/app/table/table-routing.module';
@@ -25,6 +26,7 @@ import { TableRoutingModule } from 'src/app/table/table-routing.module';
         MatCheckboxModule,
         MatButtonModule,
         MatCardModule,
+        MatSnackBarModule,
         JsonPipe,
         StarRatingModule.forRoot(),
     ],

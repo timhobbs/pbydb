@@ -24,4 +24,8 @@ export class ApiService {
     import(): Observable<Table[]> {
         return this.http.post(`${this.apiBase}/import`, {}) as Observable<Table[]>;
     }
+
+    updateTable(id: number, body: Partial<Table>): Observable<boolean> {
+        return this.http.post(`${this.apiBase}/table/${id}`, body) as Observable<boolean>;
+    }
 }

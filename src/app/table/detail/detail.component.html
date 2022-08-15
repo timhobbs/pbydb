@@ -1,7 +1,7 @@
 <h1>Table Details</h1>
 
 <ng-container *ngFor="let table of table$ | async">
-    <form #tableForm="ngForm" class="details" (ngSubmit)="submit(table)" *ngIf="!result">
+    <form #tableForm="ngForm" class="details" (ngSubmit)="submit(table)">
         <mat-card>
             <mat-card-title>{{table.description}}</mat-card-title>
             <mat-card-subtitle>{{table.manufacturer}} {{table.year}}</mat-card-subtitle>
@@ -10,7 +10,11 @@
                     <span>File:</span> {{table.name}}
                 </p>
                 <div class="corner">
-                    <star-rating [starType]="'svg'" [rating]="table.rating" (ratingChange)="change($event, table)"></star-rating>
+                    <star-rating
+                        [hoverEnabled]="true"
+                        [starType]="'svg'"
+                        [rating]="table.rating"
+                        (ratingChange)="change($event, table)"></star-rating>
                     <p>
                         <a href="https://www.ipdb.org/machine.cgi?id={{table.ipdbid}}">IPDB</a>
                     </p>
@@ -48,8 +52,4 @@
             <button mat-flat-button color="primary">Update</button>
         </p>
     </form>
-    <ng-container *ngIf="result">
-        <pre>{{result|json}}</pre>
-        <button (click)="clear()">Clear</button>
-    </ng-container>
 </ng-container>
