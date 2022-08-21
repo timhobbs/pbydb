@@ -1,4 +1,4 @@
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 
 import { ApiService } from 'src/app/services/api.service';
@@ -18,6 +18,7 @@ export class DetailComponent implements OnInit {
         private api: ApiService,
         private activatedRoute: ActivatedRoute,
         private snackBar: MatSnackBar,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
