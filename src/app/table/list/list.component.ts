@@ -11,6 +11,7 @@ import { Table } from 'src/app/table/table.interface';
 })
 export class ListComponent implements OnInit {
     tables$: Observable<Table[]> | undefined;
+    filter: string = '';
 
     constructor(
         private api: ApiService,
@@ -18,5 +19,9 @@ export class ListComponent implements OnInit {
 
     ngOnInit(): void {
         this.tables$ = this.api.getTables();
+    }
+
+    clearFilter() {
+        this.filter = '';
     }
 }
