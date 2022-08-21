@@ -4,7 +4,9 @@ import * as fs from 'fs';
 import * as morgan from 'morgan';
 import * as sqlite3 from 'sqlite3';
 
-import { parseString } from 'xml2js';
+import { Builder, parseString } from 'xml2js';
+
+const legacy = require('legacy-encoding');
 
 const vpxDbFile = `/mnt/f/Games/PinballY/Databases/Visual Pinball X/Visual Pinball X.xml`;
 const apiBase = `/api`;
@@ -85,12 +87,15 @@ where id = ${req.params.id}`;
 
 // Add games from PBY DB
 app.post(`${apiBase}/import`, (req, res, next) => {
-    fs.readFile(vpxDbFile, (err, data) => {
+    fs.readFile(vpxDbFile, 'binary', (err, data) => {
         if (err) {
             console.error(`FS error: ${err.message}`);
 
             return res.status(500).send(err.message);
         }
+
+        // Decode
+        data = legacy.decode(data, 'windows1252');
 
         return new Promise((resolve, reject) => {
             // Handle data
@@ -141,6 +146,50 @@ on conflict (description) do update set name="${obj.name}", rom="${obj.rom}", ra
             });
         });
     })
+});
+
+// Export to PBY DB
+app.post(`${apiBase}/export`, (req, res, next) => {
+    db.all('select * from tables order by description', (err, rows) => {
+        if (err) {
+            console.error(`DB export error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        const mappedRows = rows.map(row => {
+            row['$'] = { name: row.name };
+            delete row.name;
+
+            // Reset undefined values
+            Object.entries(row).forEach(([key, value]) => {
+                if (value === void 0) {
+                    row[key] = '';
+                }
+            });
+
+            return row;
+        });
+        const builder = new Builder({
+            headless: true,
+            renderOpts: {
+                pretty: true,
+                indent: '    ',
+                newline: '\n'
+            },
+        });
+
+        // Create and encode xml
+        const xml = legacy.encode(builder.buildObject({ menu: { game: mappedRows } }), 'windows1252');
+
+        // Rename xml
+        fs.renameSync(vpxDbFile, `${vpxDbFile}.backup`);
+
+        // Save updated xml
+        fs.writeFileSync(vpxDbFile, xml, 'binary');
+
+        return res.send(rows);
+    });
 });
 
 app.listen(port, () => {

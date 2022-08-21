@@ -1,21 +1,22 @@
+import { Component, OnInit } from '@angular/core';
+
 import { ApiService } from 'src/app/services/api.service';
-import { Component } from '@angular/core';
 import { Table } from 'src/app/table/table.interface';
 
 @Component({
-    selector: 'app-import',
-    templateUrl: './import.component.html',
-    styleUrls: ['./import.component.scss'],
+    selector: 'app-export',
+    templateUrl: './export.component.html',
+    styleUrls: ['./export.component.scss'],
 })
-export class ImportComponent {
+export class ExportComponent {
     results: number = 0;
 
     constructor(
         private api: ApiService,
     ) {}
 
-    import() {
-        this.api.import().subscribe((tables: Table[]) => {
+    export() {
+        this.api.export().subscribe((tables: Table[]) => {
             this.results = tables.length;
         });
     }

@@ -1,0 +1,19 @@
+<h1>Data Export</h1>
+
+<p>
+    This will export the PBYDB data to your app's VPX database.
+</p>
+<p>
+    <button *ngIf="!results"
+        mat-flat-button
+        color="primary"
+        (click)="export()"
+    >Export</button>
+    <ng-container *ngIf="results">
+        <p>{{results}} records exported!</p>
+        <button mat-flat-button
+            color="primary"
+            (click)="clear()"
+        >Clear</button>
+    </ng-container>
+</p>
