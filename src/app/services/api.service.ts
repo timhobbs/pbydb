@@ -26,15 +26,19 @@ export class ApiService {
         return this.http.post(`${this.apiBase}/import`, {}) as Observable<Table[]>;
     }
 
-    updateTable(id: number, body: Partial<Table>): Observable<boolean> {
-        return this.http.post(`${this.apiBase}/table/${id}`, body) as Observable<boolean>;
+    updateTable(id: number, body: Partial<Table>): Observable<boolean | string> {
+        return this.http.post(`${this.apiBase}/table/${id}`, body) as Observable<boolean | string>;
     }
 
     export(): Observable<Table[]> {
         return this.http.post(`${this.apiBase}/export`, {}) as Observable<Table[]>;
     }
 
-    getConfig(): Observable<ConfigurationData[]> {
-        return this.http.get(`${this.apiBase}/config`, {}) as Observable<ConfigurationData[]>;
+    getConfig(): Observable<ConfigurationData> {
+        return this.http.get(`${this.apiBase}/config`) as Observable<ConfigurationData>;
+    }
+
+    updateConfig(configuration: ConfigurationData): Observable<boolean | string> {
+        return this.http.post(`${this.apiBase}/config`, { ...configuration }) as Observable<boolean | string>;
     }
 }
