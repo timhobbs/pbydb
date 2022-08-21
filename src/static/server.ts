@@ -24,7 +24,7 @@ if (fs.existsSync(pbydb) === false) {
 }
 
 // Open the DB
-const db = new sqlite3.Database(pbydb, err => {
+const db = new sqlite3.Database(pbydb, (err) => {
     if (err) {
         console.error(`Error opening DB: ${err.message}`);
 
@@ -63,7 +63,7 @@ app.get(`${apiBase}/table/:id?`, (req, res, next) => {
         }
 
         return res.send(rows);
-    })
+    });
 });
 
 app.post(`${apiBase}/table/:id`, (req, res, next) => {
@@ -85,12 +85,12 @@ where id = ${req.params.id}`;
         }
 
         return res.send(true);
-    })
+    });
 });
 
 // Add games from PBY DB
 app.post(`${apiBase}/import`, async (req, res, next) => {
-    const [ vpxdb, error ] = await getConfiguration();
+    const { vpxdb, error } = await getConfiguration();
     if (!vpxdb) {
         res.status(500).send(error);
     }
@@ -129,9 +129,13 @@ app.post(`${apiBase}/import`, async (req, res, next) => {
 
                     sql.push(`
 insert into tables (name, description, type, rom, manufacturer, year, rating, ipdbid)
-values ("${obj.name}", "${obj.description}", "${obj.type}", "${obj.rom}", "${obj.manufacturer}",
+values ("${obj.name}", "${obj.description}", "${obj.type}", "${obj.rom}", "${
+                        obj.manufacturer
+                    }",
 ${obj.year}, ${obj.rating}, ${obj.ipdbid || null} )
-on conflict (description) do update set name="${obj.name}", rom="${obj.rom}", rating=${obj.rating};`);
+on conflict (description) do update set name="${obj.name}", rom="${
+                        obj.rom
+                    }", rating=${obj.rating};`);
 
                     return obj;
                 });
@@ -142,23 +146,23 @@ on conflict (description) do update set name="${obj.name}", rom="${obj.rom}", ra
 
                 console.log(sql.join(' '));
 
-                db.exec(sql.join(' '), err => {
+                db.exec(sql.join(' '), (err) => {
                     if (err) {
                         console.error(`DB import error: ${err.message}`);
 
                         reject(err.message);
                     }
-                })
+                });
 
                 resolve(res.send(results));
             });
         });
-    })
+    });
 });
 
 // Export to PBY DB
 app.post(`${apiBase}/export`, async (req, res, next) => {
-    const [ vpxdb, error ] = await getConfiguration();
+    const { vpxdb, error } = await getConfiguration();
     if (!vpxdb) {
         res.status(500).send(error);
     }
@@ -170,7 +174,7 @@ app.post(`${apiBase}/export`, async (req, res, next) => {
             return res.status(500).send(err.message);
         }
 
-        const mappedRows = rows.map(row => {
+        const mappedRows = rows.map((row) => {
             row['$'] = { name: row.name };
             delete row.name;
 
@@ -188,12 +192,15 @@ app.post(`${apiBase}/export`, async (req, res, next) => {
             renderOpts: {
                 pretty: true,
                 indent: '    ',
-                newline: '\n'
+                newline: '\n',
             },
         });
 
         // Create and encode xml
-        const xml = legacy.encode(builder.buildObject({ menu: { game: mappedRows } }), 'windows1252');
+        const xml = legacy.encode(
+            builder.buildObject({ menu: { game: mappedRows } }),
+            'windows1252'
+        );
 
         // Rename xml
         fs.renameSync(vpxdb, `${vpxdb}.backup`);
@@ -213,10 +220,29 @@ app.get(`${apiBase}/config`, async (req, res, next) => {
     }
 
     if (results.length && results[0].error) {
-        return res.status(500).send(results[0].error);
+        return res.status(500).send(results.error);
     }
 
     return res.send(results);
+});
+
+// Update config
+app.post(`${apiBase}/config`, (req, res, next) => {
+    const sql = `
+update config set
+vpxdb = '${req.body.vpxdb}',
+vpxtables = '${req.body.vpxtables}'
+where id = 1`;
+
+    db.run(sql, (err) => {
+        if (err) {
+            console.error(`DB update error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        return res.send(true);
+    });
 });
 
 app.listen(port, () => {
@@ -238,20 +264,22 @@ function createGameTable(res: express.Response) {
             vpsid text,
             b2s text,
             haspup integer
-        )`, err => {
-        if (err) {
-            console.error(`DB create error: ${err.message}`);
+        )`,
+        (err) => {
+            if (err) {
+                console.error(`DB create error: ${err.message}`);
 
-            return res.status(500).send(err.message);
+                return res.status(500).send(err.message);
+            }
+
+            return res.send([]);
         }
-
-        return res.send([]);
-    });
+    );
 }
 
 function createConfigTable() {
-    // Oprn DB
-    const db = new sqlite3.Database(pbydb, err => {
+    // Open DB
+    const db = new sqlite3.Database(pbydb, (err) => {
         if (err) {
             console.error(`Error opening DB: ${err.message}`);
 
@@ -269,28 +297,44 @@ function createConfigTable() {
             id integer primary key autoincrement,
             vpxdb text,
             vpxtables text
-        )`, err => {
-        if (err) {
-            console.error(`DB create error: ${err.message}`);
+        )`,
+        (err) => {
+            if (err) {
+                console.error(`DB create error: ${err.message}`);
 
-            throw(err);
+                throw err;
+            }
         }
-    });
+    );
+
+    // Add row
+    db.exec(
+        `insert into config ( vpxdb, vpxtables )
+        values ('', '')`,
+        (err) => {
+            if (err) {
+                console.error(`DB create error: ${err.message}`);
+
+                throw err;
+            }
+        }
+    );
+
 
     // Close DB
     db.close();
 }
 
-async function getConfiguration(): Promise<any[]> {
+async function getConfiguration(): Promise<any> {
     return new Promise((resolve) => {
         db.get('select * from config', (err, rows) => {
             if (err) {
                 console.error(`DB get error: ${err.message}`);
 
-                resolve([{ error: err.message }]);
+                resolve({ error: err.message });
             }
 
-            resolve(rows || [{ vpxdb: '', vpxtables: '' }]);
+            resolve(rows || { vpxdb: '', vpxtables: '' });
         });
     });
 }
