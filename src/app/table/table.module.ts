@@ -7,15 +7,21 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgModule } from '@angular/core';
 import { StarRatingModule } from 'angular-star-rating';
+import { TableFilterPipe } from './pipes/table-filter.pipe';
 import { TableRoutingModule } from 'src/app/table/table-routing.module';
 
 @NgModule({
-    declarations: [ListComponent, DetailComponent],
+    declarations: [
+        ListComponent,
+        DetailComponent,
+        TableFilterPipe
+    ],
     imports: [
         CommonModule,
         TableRoutingModule,
@@ -27,6 +33,7 @@ import { TableRoutingModule } from 'src/app/table/table-routing.module';
         MatButtonModule,
         MatCardModule,
         MatSnackBarModule,
+        MatIconModule,
         JsonPipe,
         StarRatingModule.forRoot(),
     ],
