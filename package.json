@@ -7,7 +7,7 @@
         "build": "ng build",
         "watch": "ng build --watch --configuration development",
         "test": "ng test",
-        "server": "npx ts-node src/static/server.ts"
+        "server": "nodemon --watch 'static/**' --ext 'ts,json' --ignore 'static/**/*.spec.ts' --exec 'npx ts-node src/static/server.ts'"
     },
     "private": true,
     "dependencies": {
@@ -32,6 +32,7 @@
         "express": "^4.18.1",
         "legacy-encoding": "^3.0.0",
         "morgan": "^1.10.0",
+        "nodemon": "^2.0.19",
         "rxjs": "~7.5.0",
         "sqlite3": "^5.0.11",
         "ts-node": "^10.9.1",
@@ -44,7 +45,6 @@
         "@angular/cli": "~14.1.2",
         "@angular/compiler-cli": "^14.1.0",
         "@types/jasmine": "~4.0.0",
-        "@types/mocha": "^9.1.1",
         "jasmine-core": "~4.2.0",
         "karma": "~6.4.0",
         "karma-chrome-launcher": "~3.1.0",
