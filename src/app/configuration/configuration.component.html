@@ -1,11 +1,14 @@
 <h1>Configuration</h1>
-<ng-container *ngIf=" config$ | async; let configs">
-    <ng-container *ngIf="configs.length; else none">
-        <form *ngFor="let config of configs" #cfgForm="ngForm" class="details" (ngSubmit)="submit(config)">
+<p *ngIf="showmsg" class="warn">
+    Before you can use the app you must provide at least the PBY DB file path.
+</p>
+<ng-container *ngIf=" config$ | async; let config">
+    <ng-container *ngIf="config; else none">
+        <form #cfgForm="ngForm" class="details" (ngSubmit)="submit(config)">
             <p>
                 <mat-form-field appearance="fill">
                     <mat-label>VPX DB File Path</mat-label>
-                    <input matInput type="number" [(ngModel)]="config.vpxdb" name="vpxdb" required="true"/>
+                    <input matInput type="text" [(ngModel)]="config.vpxdb" name="vpxdb" required="true"/>
                 </mat-form-field>
             </p>
             <p>
