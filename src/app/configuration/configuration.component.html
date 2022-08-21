@@ -1,0 +1,26 @@
+<h1>Configuration</h1>
+<ng-container *ngIf=" config$ | async; let configs">
+    <ng-container *ngIf="configs.length; else none">
+        <form *ngFor="let config of configs" #cfgForm="ngForm" class="details" (ngSubmit)="submit(config)">
+            <p>
+                <mat-form-field appearance="fill">
+                    <mat-label>VPX DB File Path</mat-label>
+                    <input matInput type="number" [(ngModel)]="config.vpxdb" name="vpxdb" required="true"/>
+                </mat-form-field>
+            </p>
+            <p>
+                <mat-form-field appearance="fill">
+                    <mat-label>VPX Tables Path</mat-label>
+                    <input matInput type="text" [(ngModel)]="config.vpxtables" name="vpxtables"/>
+                </mat-form-field>
+            </p>
+            <p class="button">
+                <button mat-flat-button color="primary">Update</button>
+                <button mat-flat-button color="warn" [routerLink]="['/']">Cancel</button>
+            </p>
+        </form>
+    </ng-container>
+    <ng-template #none>
+        No records found
+    </ng-template>
+</ng-container>

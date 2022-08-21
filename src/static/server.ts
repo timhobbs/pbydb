@@ -8,7 +8,7 @@ import { Builder, parseString } from 'xml2js';
 
 const legacy = require('legacy-encoding');
 
-const vpxDbFile = `/mnt/f/Games/PinballY/Databases/Visual Pinball X/Visual Pinball X.xml`;
+// const vpxDbFile = `/mnt/f/Games/PinballY/Databases/Visual Pinball X/Visual Pinball X.xml`;
 const apiBase = `/api`;
 const port = 3030;
 const pbydb = 'src/static/db/pbydb.db';
@@ -18,6 +18,9 @@ const logLevel = 'dev';
 if (fs.existsSync(pbydb) === false) {
     const newDb = new sqlite3.Database(pbydb);
     newDb.close();
+
+    // Create config table
+    createConfigTable();
 }
 
 // Open the DB
@@ -86,8 +89,13 @@ where id = ${req.params.id}`;
 });
 
 // Add games from PBY DB
-app.post(`${apiBase}/import`, (req, res, next) => {
-    fs.readFile(vpxDbFile, 'binary', (err, data) => {
+app.post(`${apiBase}/import`, async (req, res, next) => {
+    const [ vpxdb, error ] = await getConfiguration();
+    if (!vpxdb) {
+        res.status(500).send(error);
+    }
+
+    fs.readFile(vpxdb, 'binary', (err, data) => {
         if (err) {
             console.error(`FS error: ${err.message}`);
 
@@ -149,7 +157,12 @@ on conflict (description) do update set name="${obj.name}", rom="${obj.rom}", ra
 });
 
 // Export to PBY DB
-app.post(`${apiBase}/export`, (req, res, next) => {
+app.post(`${apiBase}/export`, async (req, res, next) => {
+    const [ vpxdb, error ] = await getConfiguration();
+    if (!vpxdb) {
+        res.status(500).send(error);
+    }
+
     db.all('select * from tables order by description', (err, rows) => {
         if (err) {
             console.error(`DB export error: ${err.message}`);
@@ -183,13 +196,27 @@ app.post(`${apiBase}/export`, (req, res, next) => {
         const xml = legacy.encode(builder.buildObject({ menu: { game: mappedRows } }), 'windows1252');
 
         // Rename xml
-        fs.renameSync(vpxDbFile, `${vpxDbFile}.backup`);
+        fs.renameSync(vpxdb, `${vpxdb}.backup`);
 
         // Save updated xml
-        fs.writeFileSync(vpxDbFile, xml, 'binary');
+        fs.writeFileSync(vpxdb, xml, 'binary');
 
         return res.send(rows);
     });
+});
+
+// Get config
+app.get(`${apiBase}/config`, async (req, res, next) => {
+    const results = await getConfiguration();
+    if (!results) {
+        return res.status(500).send('Error accessing config');
+    }
+
+    if (results.length && results[0].error) {
+        return res.status(500).send(results[0].error);
+    }
+
+    return res.send(results);
 });
 
 app.listen(port, () => {
@@ -197,19 +224,20 @@ app.listen(port, () => {
 });
 
 function createGameTable(res: express.Response) {
-    db.exec(`create table tables (
-                id integer primary key autoincrement,
-                name text not null,
-                description text not null unique,
-                type text,
-                rom text,
-                manufacturer text not null,
-                year integer not null,
-                rating integer,
-                ipdbid integer,
-                vpsid text,
-                b2s text,
-                haspup integer
+    db.exec(
+        `create table tables (
+            id integer primary key autoincrement,
+            name text not null,
+            description text not null unique,
+            type text,
+            rom text,
+            manufacturer text not null,
+            year integer not null,
+            rating integer,
+            ipdbid integer,
+            vpsid text,
+            b2s text,
+            haspup integer
         )`, err => {
         if (err) {
             console.error(`DB create error: ${err.message}`);
@@ -218,5 +246,51 @@ function createGameTable(res: express.Response) {
         }
 
         return res.send([]);
+    });
+}
+
+function createConfigTable() {
+    // Oprn DB
+    const db = new sqlite3.Database(pbydb, err => {
+        if (err) {
+            console.error(`Error opening DB: ${err.message}`);
+
+            return;
+        }
+
+        console.log(`DB opened successfully`);
+
+        return;
+    });
+
+    // Create table
+    db.exec(
+        `create table config (
+            id integer primary key autoincrement,
+            vpxdb text,
+            vpxtables text
+        )`, err => {
+        if (err) {
+            console.error(`DB create error: ${err.message}`);
+
+            throw(err);
+        }
+    });
+
+    // Close DB
+    db.close();
+}
+
+async function getConfiguration(): Promise<any[]> {
+    return new Promise((resolve) => {
+        db.get('select * from config', (err, rows) => {
+            if (err) {
+                console.error(`DB get error: ${err.message}`);
+
+                resolve([{ error: err.message }]);
+            }
+
+            resolve(rows || [{ vpxdb: '', vpxtables: '' }]);
+        });
     });
 }
