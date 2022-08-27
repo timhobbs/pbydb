@@ -1,4 +1,14 @@
-<h1>Table List</h1>
+<header>
+    <h1>Table List</h1>
+    <span class="view-buttons">
+        <button mat-button mat-icon-button matSuffix (click)="setView('list')" [disabled]="viewType === 'list'">
+            <mat-icon>list</mat-icon>
+        </button>
+        <button mat-button mat-icon-button matSuffix (click)="setView('grid')" [disabled]="viewType === 'grid'">
+            <mat-icon>view_module</mat-icon>
+        </button>
+    </span>
+</header>
 <ng-container *ngIf="tables$ | async; let tables">
     <ng-container *ngIf="tables.length; else none">
         <mat-form-field appearance="fill">
@@ -8,13 +18,19 @@
                 <mat-icon>close</mat-icon>
             </button>
         </mat-form-field>
-        <mat-nav-list class="navlist">
+        <mat-nav-list class="navlist" *ngIf="viewType === 'list'">
             <mat-list-item *ngFor="let table of tables | tableFilter: filter">
                 <a matLine [routerLink]="['/table', table.id]">
                     {{table.description}}
                 </a>
             </mat-list-item>
         </mat-nav-list>
+        <div class="navgrid" *ngIf="viewType === 'grid'">
+            <mat-card *ngFor="let table of tables | tableFilter: filter">
+                <mat-card-title>{{table.description}}</mat-card-title>
+                <mat-card-subtitle>{{table.name}}</mat-card-subtitle>
+            </mat-card>
+        </div>
     </ng-container>
     <ng-template #none>
         No tables found

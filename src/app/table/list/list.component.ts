@@ -12,6 +12,7 @@ import { Table } from 'src/app/table/table.interface';
 export class ListComponent implements OnInit {
     tables$: Observable<Table[]> | undefined;
     filter: string = '';
+    viewType = 'list';
 
     constructor(
         private api: ApiService,
@@ -23,5 +24,9 @@ export class ListComponent implements OnInit {
 
     clearFilter() {
         this.filter = '';
+    }
+
+    setView(type: string) {
+        this.viewType = type;
     }
 }
