@@ -9,6 +9,8 @@ import { Builder, parseString } from 'xml2js';
 const legacy = require('legacy-encoding');
 
 // const vpxDbFile = `/mnt/f/Games/PinballY/Databases/Visual Pinball X/Visual Pinball X.xml`;
+// vps-db URL: https://fraesh.github.io/vps-db/vpsdb.json?ts=1661146191805
+// weeks URL: https://virtualpinballchat.com:6080/api/v1/weeks
 const apiBase = `/api`;
 const port = 3030;
 const pbydb = 'src/static/db/pbydb.db';
@@ -103,7 +105,7 @@ app.post(`${apiBase}/import`, async (req, res, next) => {
         }
 
         // Decode
-        data = legacy.decode(data, 'windows1252');
+        data = legacy.decode(data, 'utf8');
 
         return new Promise((resolve, reject) => {
             // Handle data
@@ -128,14 +130,12 @@ app.post(`${apiBase}/import`, async (req, res, next) => {
                     });
 
                     sql.push(`
-insert into tables (name, description, type, rom, manufacturer, year, rating, ipdbid)
-values ("${obj.name}", "${obj.description}", "${obj.type}", "${obj.rom}", "${
-                        obj.manufacturer
-                    }",
-${obj.year}, ${obj.rating}, ${obj.ipdbid || null} )
-on conflict (description) do update set name="${obj.name}", rom="${
-                        obj.rom
-                    }", rating=${obj.rating};`);
+insert into tables (name, description, type, rom, manufacturer, year, rating, ipdbid, vpsid, b2s, haspup)
+values ("${obj.name}", "${obj.description}", "${obj.type}", "${obj.rom}", "${obj.manufacturer}",
+${obj.year}, ${obj.rating}, ${obj.ipdbid || null}, "${obj.vpsid || ''}", "${obj.b2s || ''}", ${obj.haspup || 0})
+on conflict (name) do update set description="${obj.description}", rom="${obj.rom}", rating=${obj.rating},
+vpsid="${obj.vpsid || ''}", b2s="${obj.b2s || ''}", haspup=${obj.haspup || 0};
+`);
 
                     return obj;
                 });
@@ -253,8 +253,8 @@ function createGameTable(res: express.Response) {
     db.exec(
         `create table tables (
             id integer primary key autoincrement,
-            name text not null,
-            description text not null unique,
+            name text not null unique,
+            description text not null,
             type text,
             rom text,
             manufacturer text not null,
@@ -337,4 +337,29 @@ async function getConfiguration(): Promise<any> {
             resolve(rows || { vpxdb: '', vpxtables: '' });
         });
     });
+}
+
+function createVpsTable() {
+    const sql = `
+create table vpslookup
+    id integer primary key autoincrement,
+    GameFileName text,
+    GameName text,
+    GameDisplay text,
+    MediaSearch text,
+    Manufact,
+    GameYear,
+    NumPlayers,
+    GameType,
+    Category,
+    GameTheme,
+    WebLinkURL,
+    IPDBNum,
+    AltRunMode,
+    DesignedBy,
+    Author,
+    GAMEVER,
+    Rom,
+    Tags,
+    VPS-ID`;
 }
