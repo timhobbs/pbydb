@@ -11,22 +11,25 @@
 </header>
 <ng-container *ngIf="tables$ | async; let tables">
     <ng-container *ngIf="tables.length; else none">
-        <mat-form-field appearance="fill">
-            <mat-label>Filter</mat-label>
-            <input type="text" matInput [(ngModel)]="filter" autocomplete="off" />
-            <button mat-button mat-icon-button matSuffix (click)="clearFilter()" *ngIf="filter">
-                <mat-icon>close</mat-icon>
-            </button>
-        </mat-form-field>
+        <div class="filter-results">
+            <mat-form-field appearance="fill">
+                <mat-label>Filter</mat-label>
+                <input type="text" matInput [(ngModel)]="filter" (keyup)="filterChanged" autocomplete="off" />
+                <button mat-button mat-icon-button matSuffix (click)="clearFilter()" *ngIf="filter">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </mat-form-field>
+            <span class="table-count">{{filteredTablesCount$ | async}} tables found</span>
+        </div>
         <mat-nav-list class="navlist" *ngIf="viewType === 'list'">
-            <mat-list-item *ngFor="let table of tables | tableFilter: filter">
+            <mat-list-item *ngFor="let table of tables | tableFilter:filter">
                 <a matLine [routerLink]="['/table', table.id]">
                     {{table.description}}
                 </a>
             </mat-list-item>
         </mat-nav-list>
         <div class="navgrid" *ngIf="viewType === 'grid'">
-            <mat-card *ngFor="let table of tables | tableFilter: filter">
+            <mat-card *ngFor="let table of tables | tableFilter:filter">
                 <mat-card-title>{{table.description}}</mat-card-title>
                 <mat-card-subtitle>{{table.name}}</mat-card-subtitle>
             </mat-card>
