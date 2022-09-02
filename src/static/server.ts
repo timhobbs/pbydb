@@ -95,14 +95,11 @@ where id = ${req.params.id}`;
 app.post(`${apiBase}/import/:type?`, async (req, res, next) => {
     switch (req.params.type) {
         case 'vps':
-
-            break;
+            return res.status(501);
         case 'vpx':
-            await importVpx(res);
-            break;
+            return await importVpx(res);
         default:
-            res.status(500);
-            break;
+            return res.status(500);
     }
 });
 
@@ -196,7 +193,6 @@ app.listen(port, () => {
 });
 
 async function importVpx(res: Response) {
-    console.log('***** importVpx');
     const { vpxdb, error } = await getConfiguration();
     if (!vpxdb) {
         res.status(500).send(error);
