@@ -63,3 +63,7 @@ body {
     --pbydb-fg: #{$fg};
     --pbydb-bg: #{$bg};
 }
+
+.mat-form-field-suffix {
+    align-self: flex-end;
+}

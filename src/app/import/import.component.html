@@ -1,11 +1,12 @@
 <h1>Data Import</h1>
 
+<h2>Import Table Data</h2>
 <p>
-    This will import your VPX data from PBY into the is app's database.
+    Import your VPX data from PBY into the app's database.
     If you have already imported it will update existing records with any
     updates you made in PBY as well as add any new tables you entered.
 </p>
-<p>
+<p class="form">
     <button *ngIf="!results"
         mat-flat-button
         color="primary"
@@ -18,4 +19,23 @@
             (click)="clear()"
         >Clear</button>
     </ng-container>
+</p>
+
+<h2>Import Spreadsheet Data</h2>
+<p>
+    Import VPS data into the database. This will allow the app the add some functionality.
+</p>
+<p class="form">
+    <mat-form-field>
+        <input type="file" accept=".csv" (change)="fileChanged($event)">
+        <mat-label>Select CSV file</mat-label>
+        <input matInput type="text" [value]="fileInput?.name">
+        <mat-icon matSuffix>cloud_upload</mat-icon>
+    </mat-form-field>
+    <button *ngIf="!vpsResults"
+        mat-flat-button
+        color="primary"
+        (click)="import('vps')"
+    >Import</button>
+
 </p>

@@ -8,19 +8,25 @@ import { Table } from 'src/app/table/table.interface';
     styleUrls: ['./import.component.scss'],
 })
 export class ImportComponent {
-    results: number = 0;
+    results = 0;
+    vpsResults = 0;
+    fileInput: any;
 
     constructor(
         private api: ApiService,
     ) {}
 
-    import() {
-        this.api.import().subscribe((tables: Table[]) => {
+    import(type = 'vpx') {
+        this.api.import(type).subscribe((tables: Table[]) => {
             this.results = tables.length;
         });
     }
 
     clear() {
         this.results = 0;
+    }
+
+    fileChanged($event: any) {
+        this.fileInput = $event.target.files[0] ?? null;
     }
 }

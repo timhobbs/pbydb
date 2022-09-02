@@ -1,7 +1,8 @@
+import { Observable, of } from 'rxjs';
+
 import { ConfigurationData } from 'src/app/configuration/configuration.interface';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { Table } from 'src/app/table/table.interface';
 
 @Injectable({
@@ -22,8 +23,8 @@ export class ApiService {
         return this.http.get(`${this.apiBase}/table/${id}`) as Observable<Table[]>;
     }
 
-    import(): Observable<Table[]> {
-        return this.http.post(`${this.apiBase}/import`, {}) as Observable<Table[]>;
+    import(type = 'vpx'): Observable<Table[]> {
+        return this.http.post(`${this.apiBase}/import/${type}`, {}) as Observable<Table[]>;
     }
 
     updateTable(id: number, body: Partial<Table>): Observable<boolean | string> {

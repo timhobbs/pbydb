@@ -1,0 +1,32 @@
+p {
+    margin-bottom: 30px;
+}
+
+h2:not(:first-of-type) {
+    margin-top: 60px;
+}
+
+mat-form-field {
+    position: relative;
+    max-width: 350px;
+    width: 100%;
+
+    mat-icon {
+        color: rgba(0, 0, 0, 0.54);
+    }
+}
+
+input[type='file'] {
+    opacity: 0;
+    position: absolute;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    button {
+        max-width: 350px;
+    }
+}
