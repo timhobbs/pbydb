@@ -2,7 +2,7 @@ import { Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { Observable, take } from 'rxjs';
 
 import { ActivatedRoute } from '@angular/router';
-import { ApiService } from 'src/app/services/api.service';
+import { ApiService } from 'src/app/services/api/api.service';
 import { ConfigurationData } from 'src/app/configuration/configuration.interface';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
