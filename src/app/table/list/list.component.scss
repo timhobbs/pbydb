@@ -10,7 +10,8 @@ mat-form-field {
 
     mat-card {
         width: calc(20%);
-        height: 150px;
+        min-height: 150px;
+        overflow: hidden;
 
         mat-card-title {
             line-height: 1.3;
