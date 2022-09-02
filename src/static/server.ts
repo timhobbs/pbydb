@@ -1,12 +1,13 @@
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as fs from 'fs';
+import * as iconv from 'iconv-lite';
 import * as morgan from 'morgan';
 import * as sqlite3 from 'sqlite3';
 
 import { Builder, parseString } from 'xml2js';
 
-const legacy = require('legacy-encoding');
+import { Response } from 'express';
 
 // const vpxDbFile = `/mnt/f/Games/PinballY/Databases/Visual Pinball X/Visual Pinball X.xml`;
 // vps-db URL: https://fraesh.github.io/vps-db/vpsdb.json?ts=1661146191805
@@ -91,73 +92,18 @@ where id = ${req.params.id}`;
 });
 
 // Add games from PBY DB
-app.post(`${apiBase}/import`, async (req, res, next) => {
-    const { vpxdb, error } = await getConfiguration();
-    if (!vpxdb) {
-        res.status(500).send(error);
+app.post(`${apiBase}/import/:type?`, async (req, res, next) => {
+    switch (req.params.type) {
+        case 'vps':
+
+            break;
+        case 'vpx':
+            await importVpx(res);
+            break;
+        default:
+            res.status(500);
+            break;
     }
-
-    fs.readFile(vpxdb, 'binary', (err, data) => {
-        if (err) {
-            console.error(`FS error: ${err.message}`);
-
-            return res.status(500).send(err.message);
-        }
-
-        // Decode
-        data = legacy.decode(data, 'utf8');
-
-        return new Promise((resolve, reject) => {
-            // Handle data
-            parseString(data, (xerr, parsed) => {
-                if (xerr) {
-                    console.error(`XML parse error: ${xerr.message}`);
-
-                    reject(res.status(500).send(xerr.message));
-                }
-
-                console.log('parse OK');
-
-                const sql: string[] = [];
-                const results = parsed?.menu?.game.map((game: any) => {
-                    const obj: any = {};
-                    obj.name = game.$.name;
-                    delete game.$;
-
-                    // Convert all the array values to simple ones
-                    Object.entries(game).forEach(([key, value]) => {
-                        obj[key] = (value as any)[0];
-                    });
-
-                    sql.push(`
-insert into tables (name, description, type, rom, manufacturer, year, rating, ipdbid, vpsid, b2s, haspup)
-values ("${obj.name}", "${obj.description}", "${obj.type}", "${obj.rom}", "${obj.manufacturer}",
-${obj.year}, ${obj.rating}, ${obj.ipdbid || null}, "${obj.vpsid || ''}", "${obj.b2s || ''}", ${obj.haspup || 0})
-on conflict (name) do update set description="${obj.description}", rom="${obj.rom}", rating=${obj.rating},
-vpsid="${obj.vpsid || ''}", b2s="${obj.b2s || ''}", haspup=${obj.haspup || 0};
-`);
-
-                    return obj;
-                });
-
-                // Execute SQL
-                sql.unshift('begin;');
-                sql.push('commit;');
-
-                console.log(sql.join(' '));
-
-                db.exec(sql.join(' '), (err) => {
-                    if (err) {
-                        console.error(`DB import error: ${err.message}`);
-
-                        reject(err.message);
-                    }
-                });
-
-                resolve(res.send(results));
-            });
-        });
-    });
 });
 
 // Export to PBY DB
@@ -197,9 +143,9 @@ app.post(`${apiBase}/export`, async (req, res, next) => {
         });
 
         // Create and encode xml
-        const xml = legacy.encode(
+        const xml = iconv.encode(
             builder.buildObject({ menu: { game: mappedRows } }),
-            'windows1252'
+            'windows-1252'
         );
 
         // Rename xml
@@ -248,6 +194,76 @@ where id = 1`;
 app.listen(port, () => {
     console.log(`API listening on port: ${port}`);
 });
+
+async function importVpx(res: Response) {
+    console.log('***** importVpx');
+    const { vpxdb, error } = await getConfiguration();
+    if (!vpxdb) {
+        res.status(500).send(error);
+    }
+
+    fs.readFile(vpxdb, (err, data) => {
+        if (err) {
+            console.error(`FS error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        // Decode
+        const decoded = iconv.decode(data, 'windows-1252');
+
+        return new Promise((resolve, reject) => {
+            // Handle data
+            parseString(decoded, (xerr, parsed) => {
+                if (xerr) {
+                    console.error(`XML parse error: ${xerr.message}`);
+
+                    reject(res.status(500).send(xerr.message));
+                }
+
+                console.log('parse OK');
+
+                const sql: string[] = [];
+                const results = parsed?.menu?.game.map((game: any) => {
+                    const obj: any = {};
+                    obj.name = game.$.name;
+                    delete game.$;
+
+                    // Convert all the array values to simple ones
+                    Object.entries(game).forEach(([key, value]) => {
+                        obj[key] = (value as any)[0];
+                    });
+
+                    sql.push(`
+insert into tables (name, description, type, rom, manufacturer, year, rating, ipdbid, vpsid, b2s, haspup)
+values ("${obj.name}", "${obj.description}", "${obj.type}", "${obj.rom}", "${obj.manufacturer}",
+${obj.year}, ${obj.rating}, ${obj.ipdbid || null}, "${obj.vpsid || ''}", "${obj.b2s || ''}", ${obj.haspup || 0})
+on conflict (name) do update set description="${obj.description}", rom="${obj.rom}", rating=${obj.rating},
+vpsid="${obj.vpsid || ''}", b2s="${obj.b2s || ''}", haspup=${obj.haspup || 0};
+`);
+
+                    return obj;
+                });
+
+                // Execute SQL
+                sql.unshift('begin;');
+                sql.push('commit;');
+
+                console.log(sql.join(' '));
+
+                db.exec(sql.join(' '), (err) => {
+                    if (err) {
+                        console.error(`DB import error: ${err.message}`);
+
+                        reject(err.message);
+                    }
+                });
+
+                resolve(res.send(results));
+            });
+        });
+    });
+}
 
 function createGameTable(res: express.Response) {
     db.exec(
@@ -313,7 +329,7 @@ function createConfigTable() {
         values ('', '')`,
         (err) => {
             if (err) {
-                console.error(`DB create error: ${err.message}`);
+                console.error(`DB insert error: ${err.message}`);
 
                 throw err;
             }
@@ -339,11 +355,15 @@ async function getConfiguration(): Promise<any> {
     });
 }
 
-function createVpsTable() {
+function importVpsData(csvPath: string) {
+
+}
+
+function createVpsTable(db: sqlite3.Database) {
     const sql = `
 create table vpslookup
     id integer primary key autoincrement,
-    GameFileName text,
+    GameFileName text not null unique,
     GameName text,
     GameDisplay text,
     MediaSearch text,
@@ -362,4 +382,20 @@ create table vpslookup
     Rom,
     Tags,
     VPS-ID`;
+
+    // Create table
+    db.exec(
+        `create table config (
+            id integer primary key autoincrement,
+            vpxdb text,
+            vpxtables text
+        )`,
+        (err) => {
+            if (err) {
+                console.error(`DB create error: ${err.message}`);
+
+                throw err;
+            }
+        }
+    );
 }
