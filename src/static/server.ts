@@ -408,93 +408,62 @@ async function importVpslookup(req: express.Request, res: express.Response) {
                     reject(err.message);
                 }
 
-                // const dataRows = data.split('\n');
-                // const parsedData = dataRows.map(row => parse(row)[0]);
+                const dataRows = data.split('\n');
+                const parsedData = dataRows.map(row => parse(row)[0]);
 
-                // console.log('***** upload parsed', parsedData.length);
-                // console.log('***** upload parsedData', parsedData);
-
-                // Remove columns with no name
-                const parsedData = parse(data);
-                const parsed = [...parsedData];
-                const firstRow = parsed.shift() as string[];
-                const removeColumn: number[] = []
-                firstRow.forEach((col: string, index: number) => {
-                    if (col === '') {
-                        removeColumn.push(index + 1);
-                    }
-                });
-
-                const result = parsedData.reduce((acc: string[][], item: string[], index: number) => {
-                    removeColumn.reverse().forEach((col: number) => {
-                        if (col === 1) {
-                            item.shift();
-                        } else if (col === item.length) {
-                            item.pop()
-                        } else {
-                            item = item.slice(col)
-                        }
-                    });
-                    acc.push(item);
-
-                    return acc;
-                }, []);
-
-                resolve(result);
+                resolve(parsedData);
             });
         });
-        const insertResult = await updateVpslookupTable(data);
-        const result = { ...insertResult, data: data };
+        const results = await updateVpslookupTable(data);
+        const result = { results, data };
 
         return res.send(result);
     } catch (err: any) {
-        return res.status(500).send(err.message);
+        return res.status(500).send(err);
     }
 }
 
 function updateVpslookupTable(data: string[][]) {
-    return new Promise<Record<string, number>>((resolve, reject) => {
-        const firstRow = data.shift() || [];
+    return new Promise<any[]>((resolve, reject) => {
+        try {
+            const firstRow = data.shift() || [];
 
-        console.log(`***** rows`, data.length);
-        console.log(`***** data`, data);
+            console.log(`***** rows`, data.length);
 
-        const placeholder = `(${firstRow.map((col: any) => '?').join(',')})`;
-        const insert =  `insert into vpslookup (${
-            firstRow.reduce((row: string[], column: string) => {
-                row.push(column.replace('-', ''));
+            const placeholder = `(${firstRow.map((col: any) => '?').join(',')})`;
+            const insert =  `insert into vpslookup (${
+                firstRow.reduce((row: string[], column: string) => {
+                    row.push(column.replace('-', ''));
 
-                return row;
-            }, []).join(',')
-        }) values ${placeholder}`;
+                    return row;
+                }, []).join(',')
+            }) values ${placeholder}`;
 
-        // From https://stackoverflow.com/a/53321997
-        const results: any[] = [];
-        const batch = data.reduce((acc: string[][], item: string[]) => {
-            acc.push([insert, ...item]);
+            const promises: Promise<sqlite3.RunResult>[] = [];
+            data.forEach(params => {
+                const p = new Promise<sqlite3.RunResult>((resolve, reject) => {
+                    db.run(insert, params, function (err) {
+                        if (err) {
+                            return reject(err);
+                        }
 
-            return acc;
-        }, []);
-        return batch.reduce(async (acc: Promise<any>, statement: string[]) => {
-            const result = await acc;
-            results.push(result);
-            return new Promise<any>((resolve, reject) => {
-                const sql = statement.shift() as string;
-                const params = statement;
-                db.run(sql, params, function (err) {
-                    if (err) {
-                        return reject(err);
-                    }
-
-                    resolve(this);
+                        return resolve(this);
+                    });
                 });
+                promises.push(p);
             });
-        }, Promise.resolve())
-        .catch((err: any) => {
-            console.log(`${err} in statement #${results.length}`);
 
-            throw new Error(`${err} in statement #${results.length}`);
-        })
-        .then(() => results.slice(2));
+            console.log('***** promises', promises.length);
+
+            const promiseResults: any[] = [];
+            Promise.allSettled(promises)
+                .then((results) => {
+                    promiseResults.push(results);
+                });
+
+            return resolve(promiseResults);
+        } catch (err) {
+            return reject(err);
+        }
     });
 }
