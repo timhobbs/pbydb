@@ -1,6 +1,7 @@
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as fs from 'fs';
+import * as http from 'http';
 import * as iconv from 'iconv-lite';
 import * as morgan from 'morgan';
 import * as sqlite3 from 'sqlite3';
@@ -9,6 +10,7 @@ import { Builder, parseString } from 'xml2js';
 import { upload, uploadPath } from './middleware/upload-file';
 
 import { Response } from 'express';
+import { Server } from 'socket.io';
 import { parse } from 'csv-string';
 
 // const vpxDbFile = `/mnt/f/Games/PinballY/Databases/Visual Pinball X/Visual Pinball X.xml`;
@@ -214,7 +216,10 @@ where id = 1`;
     });
 });
 
-app.listen(port, () => {
+const httpServer = new http.Server(app);
+const io = new Server(httpServer, { cors: { origin: '*' } });
+
+httpServer.listen(port, () => {
     console.log(`API listening on port: ${port}`);
 });
 
@@ -414,8 +419,8 @@ async function importVpslookup(req: express.Request, res: express.Response) {
                 resolve(parsedData);
             });
         });
-        const results = await updateVpslookupTable(data);
-        const result = { results, data };
+        await updateVpslookupTable(data);
+        const result = { data };
 
         return res.send(result);
     } catch (err: any) {
@@ -424,11 +429,12 @@ async function importVpslookup(req: express.Request, res: express.Response) {
 }
 
 function updateVpslookupTable(data: string[][]) {
-    return new Promise<any[]>((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
         try {
             const firstRow = data.shift() || [];
 
             console.log(`***** rows`, data.length);
+            io.emit('record-total', data.length);
 
             const placeholder = `(${firstRow.map((col: any) => '?').join(',')})`;
             const insert =  `insert into vpslookup (${
@@ -440,12 +446,16 @@ function updateVpslookupTable(data: string[][]) {
             }) values ${placeholder}`;
 
             const promises: Promise<sqlite3.RunResult>[] = [];
-            data.forEach(params => {
+            data.forEach((params, index) => {
                 const p = new Promise<sqlite3.RunResult>((resolve, reject) => {
                     db.run(insert, params, function (err) {
                         if (err) {
+                            io.emit('record-status', { success: false, msg: err.message });
+
                             return reject(err);
                         }
+
+                        io.emit('record-status', { success: true, msg: params });
 
                         return resolve(this);
                     });
@@ -453,15 +463,13 @@ function updateVpslookupTable(data: string[][]) {
                 promises.push(p);
             });
 
-            console.log('***** promises', promises.length);
-
             const promiseResults: any[] = [];
             Promise.allSettled(promises)
                 .then((results) => {
                     promiseResults.push(results);
                 });
 
-            return resolve(promiseResults);
+            return resolve();
         } catch (err) {
             return reject(err);
         }
