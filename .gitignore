@@ -42,3 +42,4 @@ testem.log
 Thumbs.db
 
 *.db
+.vscode/settings.json
