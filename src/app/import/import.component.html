@@ -35,6 +35,7 @@
     <button *ngIf="!vpsResults"
         mat-flat-button
         color="primary"
+        [disabled]="!fileInput?.name"
         (click)="import('vps')"
     >Import</button>
 

@@ -1,8 +1,8 @@
-import { Observable, of } from 'rxjs';
+import { HttpClient, HttpRequest } from '@angular/common/http';
 
 import { ConfigurationData } from 'src/app/configuration/configuration.interface';
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Table } from 'src/app/table/table.interface';
 
 @Injectable({
@@ -23,8 +23,23 @@ export class ApiService {
         return this.http.get(`${this.apiBase}/table/${id}`) as Observable<Table[]>;
     }
 
-    import(type = 'vpx'): Observable<Table[]> {
-        return this.http.post(`${this.apiBase}/import/${type}`, {}) as Observable<Table[]>;
+    import(type = 'vpx', file: File | null = null): Observable<Table[]> {
+        const endpoint = `${this.apiBase}/import/${type}`;
+
+        // If no file simply import the table data
+        if (file === null) {
+            return this.http.post(endpoint, {}) as Observable<Table[]>;
+        }
+
+        // Upload CSV file
+        const formData = new FormData();
+        formData.append('file', file);
+        const req = new HttpRequest('POST', endpoint, formData, {
+            reportProgress: true,
+            responseType: 'json',
+        });
+
+        return this.http.request(req) as unknown as Observable<Table[]>;
     }
 
     updateTable(id: number, body: Partial<Table>): Observable<boolean | string> {

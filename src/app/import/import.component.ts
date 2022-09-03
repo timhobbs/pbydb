@@ -10,14 +10,15 @@ import { Table } from 'src/app/table/table.interface';
 export class ImportComponent {
     results = 0;
     vpsResults = 0;
-    fileInput: any;
+    fileInput: File | null = null;
 
     constructor(
         private api: ApiService,
     ) {}
 
     import(type = 'vpx') {
-        this.api.import(type).subscribe((tables: Table[]) => {
+        const file = this.fileInput ?? null;
+        this.api.import(type, file).subscribe((tables: Table[]) => {
             this.results = tables.length;
         });
     }
