@@ -1,9 +1,10 @@
-import { Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Observable, take } from 'rxjs';
 
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from 'src/app/services/api/api.service';
 import { ConfigurationData } from 'src/app/configuration/configuration.interface';
+import { Location } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
@@ -19,6 +20,7 @@ export class ConfigurationComponent implements OnInit {
         private api: ApiService,
         private snackBar: MatSnackBar,
         private activatedRoute: ActivatedRoute,
+        private locationService: Location,
     ) {}
 
     ngOnInit(): void {
@@ -34,6 +36,8 @@ export class ConfigurationComponent implements OnInit {
                 if (result === true) {
                     this.config$ = this.api.getConfig();
                     message = 'Configuration successfully updated!';
+                    this.locationService.replaceState(location.pathname);
+                    this.showmsg = false;
                 }
 
                 this.snackBar.open(message, 'Close', { duration: 3000 });
@@ -41,9 +45,7 @@ export class ConfigurationComponent implements OnInit {
     }
 
     private checkForMessage() {
-        console.log('***** checking');
         this.activatedRoute.queryParams.subscribe((params)=> {
-            console.log('***** params', params['showmsg']);
             this.showmsg = params['showmsg'] ?? false;
         });
     }
