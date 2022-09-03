@@ -16,8 +16,17 @@ import { parse } from 'csv-string';
 // weeks URL: https://virtualpinballchat.com:6080/api/v1/weeks
 const apiBase = `/api`;
 const port = 3030;
-const pbydb = `${__dirname}/assets/db/pbydb.db`;
+const pbydbPath = `${__dirname}/assets/db`;
+const pbydb = `${pbydbPath}/pbydb.db`;
 const logLevel = 'dev';
+
+// Check for proper folders
+if (!fs.existsSync(pbydbPath)) {
+    fs.mkdirSync(pbydbPath, { recursive: true });
+}
+if (!fs.existsSync(uploadPath)) {
+    fs.mkdirSync(uploadPath, { recursive: true });
+}
 
 // Create the DB if it doesn't exist
 if (fs.existsSync(pbydb) === false) {
