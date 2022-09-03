@@ -33,8 +33,27 @@ if (fs.existsSync(pbydb) === false) {
     const newDb = new sqlite3.Database(pbydb);
     newDb.close();
 
+    // Open DB
+    const db = new sqlite3.Database(pbydb, (err) => {
+        if (err) {
+            console.error(`Error opening DB: ${err.message}`);
+
+            return;
+        }
+
+        console.log(`DB opened successfully`);
+
+        return;
+    });
+
     // Create config table
-    createConfigTable();
+    createConfigTable(db);
+    createTablesTable(db);
+    createVpslookupTable(db);
+
+    // Close DB
+    db.close();
+
 }
 
 // Open the DB
@@ -69,10 +88,6 @@ app.get(`${apiBase}/table/:id?`, (req, res, next) => {
         if (err) {
             console.error(`DB error: ${err.message}`);
 
-            if (err.message.includes('no such table')) {
-                return createTablesTable(res);
-            }
-
             return res.status(500).send(err.message);
         }
 
@@ -106,7 +121,7 @@ where id = ${req.params.id}`;
 app.post(`${apiBase}/import/:type?`, async (req, res, next) => {
     switch (req.params.type) {
         case 'vps':
-            return await importVps(req, res);
+            return await importVpslookup(req, res);
         case 'vpx':
             return await importVpx(res);
         default:
@@ -203,89 +218,7 @@ app.listen(port, () => {
     console.log(`API listening on port: ${port}`);
 });
 
-async function importVpx(res: Response) {
-    const { vpxdb, error } = await getConfiguration();
-    if (!vpxdb) {
-        res.status(500).send(error);
-    }
-
-    // Make sure `tables` table exists
-    // TODO: refactor so this is not duplicated
-    const tablesSql = 'select * from tables';
-    db.all(tablesSql, (err, rows) => {
-        if (err) {
-            console.error(`DB error: ${err.message}`);
-
-            if (err.message.includes('no such table')) {
-                createTablesTable(res);
-            }
-        }
-    });
-
-    fs.readFile(vpxdb, (err, data) => {
-        if (err) {
-            console.error(`FS error: ${err.message}`);
-
-            return res.status(500).send(err.message);
-        }
-
-        // Decode
-        const decoded = iconv.decode(data, 'windows-1252');
-
-        return new Promise((resolve, reject) => {
-            // Handle data
-            parseString(decoded, (xerr, parsed) => {
-                if (xerr) {
-                    console.error(`XML parse error: ${xerr.message}`);
-
-                    reject(res.status(500).send(xerr.message));
-                }
-
-                console.log('parse OK');
-
-                const sql: string[] = [];
-                const results = parsed?.menu?.game.map((game: any) => {
-                    const obj: any = {};
-                    obj.name = game.$.name;
-                    delete game.$;
-
-                    // Convert all the array values to simple ones
-                    Object.entries(game).forEach(([key, value]) => {
-                        obj[key] = (value as any)[0];
-                    });
-
-                    sql.push(`
-insert into tables (name, description, type, rom, manufacturer, year, rating, ipdbid, vpsid, b2s, haspup)
-values ("${obj.name}", "${obj.description}", "${obj.type}", "${obj.rom}", "${obj.manufacturer}",
-${obj.year}, ${obj.rating}, ${obj.ipdbid || null}, "${obj.vpsid || ''}", "${obj.b2s || ''}", ${obj.haspup || 0})
-on conflict (name) do update set description="${obj.description}", rom="${obj.rom}", rating=${obj.rating},
-vpsid="${obj.vpsid || ''}", b2s="${obj.b2s || ''}", haspup=${obj.haspup || 0};
-`);
-
-                    return obj;
-                });
-
-                // Execute SQL
-                sql.unshift('begin;');
-                sql.push('commit;');
-
-                console.log(sql.join(' '));
-
-                db.exec(sql.join(' '), (err) => {
-                    if (err) {
-                        console.error(`DB import error: ${err.message}`);
-
-                        reject(err.message);
-                    }
-                });
-
-                resolve(res.send(results));
-            });
-        });
-    });
-}
-
-function createTablesTable(res: express.Response) {
+function createTablesTable(db: sqlite3.Database) {
     db.exec(
         `create table tables (
             id integer primary key autoincrement,
@@ -305,28 +238,13 @@ function createTablesTable(res: express.Response) {
             if (err) {
                 console.error(`DB create error: ${err.message}`);
 
-                return res.status(500).send(err.message);
+                throw err;
             }
-
-            return res.send([]);
         }
     );
 }
 
-function createConfigTable() {
-    // Open DB
-    const db = new sqlite3.Database(pbydb, (err) => {
-        if (err) {
-            console.error(`Error opening DB: ${err.message}`);
-
-            return;
-        }
-
-        console.log(`DB opened successfully`);
-
-        return;
-    });
-
+function createConfigTable(db: sqlite3.Database) {
     // Create table
     db.exec(
         `create table config (
@@ -355,10 +273,106 @@ function createConfigTable() {
             }
         }
     );
+}
 
+function createVpslookupTable(db: sqlite3.Database) {
+    // Create table
+    db.exec(
+        `create table vpslookup (
+            id integer primary key autoincrement,
+            GameFileName text,
+            GameName text,
+            GameDisplay text,
+            MediaSearch text,
+            Manufact text,
+            GameYear text,
+            NumPlayers text,
+            GameType text,
+            Category text,
+            GameTheme text,
+            WebLinkURL text,
+            IPDBNum text,
+            AltRunMode text,
+            DesignedBy text,
+            Author text,
+            GAMEVER text,
+            Rom text,
+            Tags text,
+            VPSID text unique
+        )`,
+        (err) => {
+            if (err) {
+                console.error(`DB create error: ${err.message}`);
 
-    // Close DB
-    db.close();
+                throw err;
+            }
+        }
+    );
+}
+
+async function importVpx(res: Response) {
+    const { vpxdb, error } = await getConfiguration();
+    if (!vpxdb) {
+        res.status(500).send(error);
+    }
+
+    fs.readFile(vpxdb, (err, data) => {
+        if (err) {
+            console.error(`FS error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        // Decode
+        const decoded = iconv.decode(data, 'windows-1252');
+
+        return new Promise((resolve, reject) => {
+            // Handle data
+            parseString(decoded, (xerr, parsed) => {
+                if (xerr) {
+                    console.error(`XML parse error: ${xerr.message}`);
+
+                    reject(res.status(500).send(xerr.message));
+                }
+
+                const sql: string[] = [];
+                const results = parsed?.menu?.game.map((game: any) => {
+                    const obj: any = {};
+                    obj.name = game.$.name;
+                    delete game.$;
+
+                    // Convert all the array values to simple ones
+                    Object.entries(game).forEach(([key, value]) => {
+                        obj[key] = (value as any)[0];
+                    });
+
+                    sql.push(`
+insert into tables (name, description, type, rom, manufacturer, year, rating, ipdbid, vpsid, b2s, haspup)
+values ("${obj.name}", "${obj.description}", "${obj.type}", "${obj.rom}", "${obj.manufacturer}",
+${obj.year}, ${obj.rating}, ${obj.ipdbid || null}, "${obj.vpsid || ''}", "${obj.b2s || ''}", ${obj.haspup || 0})
+on conflict (name) do update set description="${obj.description}", rom="${obj.rom}", rating=${obj.rating},
+vpsid="${obj.vpsid || ''}", b2s="${obj.b2s || ''}", haspup=${obj.haspup || 0};
+`);
+
+                    return obj;
+                });
+
+                // Execute SQL
+                sql.unshift('begin;');
+                sql.push('commit;');
+
+                db.exec(sql.join(' '), (err) => {
+                    if (err) {
+                        console.error(`DB import error: ${err.message}`);
+
+                        reject(err.message);
+                    }
+                });
+
+                resolve(res.send(results));
+            });
+        });
+    });
 }
 
 async function getConfiguration(): Promise<any> {
@@ -375,10 +389,8 @@ async function getConfiguration(): Promise<any> {
     });
 }
 
-async function importVps(req: express.Request, res: express.Response) {
+async function importVpslookup(req: express.Request, res: express.Response) {
     try {
-        await createVpsTable(res);
-
         // Upload the file
         await upload(req, res);
 
@@ -396,6 +408,12 @@ async function importVps(req: express.Request, res: express.Response) {
                     reject(err.message);
                 }
 
+                // const dataRows = data.split('\n');
+                // const parsedData = dataRows.map(row => parse(row)[0]);
+
+                // console.log('***** upload parsed', parsedData.length);
+                // console.log('***** upload parsedData', parsedData);
+
                 // Remove columns with no name
                 const parsedData = parse(data);
                 const parsed = [...parsedData];
@@ -406,9 +424,6 @@ async function importVps(req: express.Request, res: express.Response) {
                         removeColumn.push(index + 1);
                     }
                 });
-
-                // console.log(`***** parsed`, parsed[0]);
-                console.log(`***** removeColumn`, removeColumn);
 
                 const result = parsedData.reduce((acc: string[][], item: string[], index: number) => {
                     removeColumn.reverse().forEach((col: number) => {
@@ -428,7 +443,7 @@ async function importVps(req: express.Request, res: express.Response) {
                 resolve(result);
             });
         });
-        const insertResult = await updateVpsTable(data);
+        const insertResult = await updateVpslookupTable(data);
         const result = { ...insertResult, data: data };
 
         return res.send(result);
@@ -437,60 +452,13 @@ async function importVps(req: express.Request, res: express.Response) {
     }
 }
 
-function createVpsTable(res: express.Response) {
-    let sql = 'select * from vpslookup';
-
-    return new Promise<number>((resolve, reject) => {
-        db.all(sql, (err, rows) => {
-            if (err) {
-                console.error(`DB error: ${err.message}`);
-
-                if (err.message.includes('no such table')) {
-                    sql = `
-create table vpslookup (
-    id integer primary key autoincrement,
-    GameFileName text,
-    GameName text,
-    GameDisplay text,
-    MediaSearch text,
-    Manufact text,
-    GameYear text,
-    NumPlayers text,
-    GameType text,
-    Category text,
-    GameTheme text,
-    WebLinkURL text,
-    IPDBNum text,
-    AltRunMode text,
-    DesignedBy text,
-    Author text,
-    GAMEVER text,
-    Rom text,
-    Tags text,
-    VPSID text not null unique
-)`;
-
-                    // Create table
-                    db.exec(sql,
-                        (err) => {
-                            if (err) {
-                                console.error(`DB create error: ${err.message}`);
-                                reject(err.message);
-                            }
-
-                            resolve(0);
-                        });
-                }
-            }
-
-            resolve(rows?.length ?? 0);
-        });
-    });
-}
-
-function updateVpsTable(data: string[][]) {
+function updateVpslookupTable(data: string[][]) {
     return new Promise<Record<string, number>>((resolve, reject) => {
         const firstRow = data.shift() || [];
+
+        console.log(`***** rows`, data.length);
+        console.log(`***** data`, data);
+
         const placeholder = `(${firstRow.map((col: any) => '?').join(',')})`;
         const insert =  `insert into vpslookup (${
             firstRow.reduce((row: string[], column: string) => {
@@ -524,6 +492,8 @@ function updateVpsTable(data: string[][]) {
         }, Promise.resolve())
         .catch((err: any) => {
             console.log(`${err} in statement #${results.length}`);
+
+            throw new Error(`${err} in statement #${results.length}`);
         })
         .then(() => results.slice(2));
     });
