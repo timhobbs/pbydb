@@ -1,0 +1,44 @@
+.container {
+    display: flex;
+    flex-direction: column;
+
+    .tree {
+        min-width: 100%;
+        margin-right: 0;
+        margin-bottom: 30px;
+
+        mat-tree {
+            margin-bottom: 25px;
+        }
+
+        button {
+            width: 100%;
+        }
+    }
+}
+
+.warn {
+    color: var(--pbydb-warn);
+}
+
+.sql {
+    width: 100%;
+    min-height: 200px;
+}
+
+tr.mat-header-row {
+    position: sticky;
+    top: 0;
+}
+
+@media (min-width: 768px) {
+    .container {
+        flex-direction: row;
+
+        .tree {
+            min-width: 150px;
+            margin-right: 30px;
+            margin-bottom: 0;
+        }
+    }
+}

@@ -10,6 +10,7 @@ const routes: Routes = [
     { path: 'import', canActivate: [HasConfigGuard], loadChildren: () => import('./import/import.module').then(m => m.ImportModule) },
     { path: 'export', canActivate: [HasConfigGuard], loadChildren: () => import('./export/export.module').then(m => m.ExportModule) },
     { path: 'configuration', loadChildren: () => import('./configuration/configuration.module').then(m => m.ConfigurationModule) },
+    { path: 'database', loadChildren: () => import('./database/database.module').then(m => m.DatabaseModule) },
     { path: '', component: HomeComponent, pathMatch: 'full' },
     { path: '**', component: PageNotFoundComponent },
 ];

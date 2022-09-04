@@ -22,6 +22,10 @@ const pbydbPath = `${__dirname}/assets/db`;
 const pbydb = `${pbydbPath}/pbydb.db`;
 const logLevel = 'dev';
 
+// ****************************************************************************
+// DB Init
+// ****************************************************************************
+
 // Check for proper folders
 if (!fs.existsSync(pbydbPath)) {
     fs.mkdirSync(pbydbPath, { recursive: true });
@@ -71,9 +75,23 @@ const db = new sqlite3.Database(pbydb, (err) => {
     return;
 });
 
+// ****************************************************************************
+// Server init
+// ****************************************************************************
+
 const app = express();
 app.use(bodyParser.json());
 app.use(morgan(logLevel));
+const httpServer = new http.Server(app);
+const io = new Server(httpServer, { cors: { origin: '*' } });
+
+httpServer.listen(port, () => {
+    console.log(`API listening on port: ${port}`);
+});
+
+// ****************************************************************************
+// Routes
+// ****************************************************************************
 
 app.get(`${apiBase}/status`, (req, res, next) => {
     return res.status(200).send('OK');
@@ -97,6 +115,7 @@ app.get(`${apiBase}/table/:id?`, (req, res, next) => {
     });
 });
 
+// Update table
 app.post(`${apiBase}/table/:id`, (req, res, next) => {
     const sql = `
 update tables set
@@ -216,12 +235,57 @@ where id = 1`;
     });
 });
 
-const httpServer = new http.Server(app);
-const io = new Server(httpServer, { cors: { origin: '*' } });
+// Get database table list
+app.get(`${apiBase}/db`, (req, res, next) => {
+    const sql = `
+select name from sqlite_schema
+where type = 'table' and name not like 'sqlite_%'`;
 
-httpServer.listen(port, () => {
-    console.log(`API listening on port: ${port}`);
+    db.all(sql, (err, rows) => {
+        if (err) {
+            console.error(`DB error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        return res.send(rows);
+    });
 });
+
+// Get VPS lookup
+app.get(`${apiBase}/vpslookup/:id?`, async (req, res, next) => {
+    let sql = 'select * from vpslookup';
+    if (req.params.id) {
+        sql += ` where id = ${req.params.id}`;
+    }
+
+    db.all(sql, (err, rows) => {
+        if (err) {
+            console.error(`DB error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        return res.send(rows);
+    });
+});
+
+// Execute SQL
+app.post(`${apiBase}/sql`, async (req, res, next) => {
+    db.all(req.body.sql, (err, rows) => {
+        if (err) {
+            console.error(`DB error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        return res.send(rows);
+    });
+});
+
+// ****************************************************************************
+// Methods
+// ****************************************************************************
 
 function createTablesTable(db: sqlite3.Database) {
     db.exec(
