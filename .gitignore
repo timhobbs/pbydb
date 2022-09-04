@@ -44,3 +44,4 @@ Thumbs.db
 *.db
 .vscode/settings.json
 src/static/assets/**/*
+.env
