@@ -28,6 +28,13 @@
             <td mat-cell *matCellDef="let row">{{column.cell(row)}}</td>
         </ng-container>
 
+        <ng-container *ngIf="currentTableName !== 'config'" matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row">
+                <button mat-icon-button color="warn" (click)="delete(row)"><mat-icon>delete</mat-icon></button>
+            </td>
+        </ng-container>
+
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
@@ -38,18 +45,20 @@
     </mat-table>
 </div>
 
-<h2>SQL</h2>
+<ng-container *ngIf="enableAdvanced">
+    <h2>SQL</h2>
 
-<p>
-    Use the textarea below to write any SQL statement.
-    <strong class="warn">WARNING:</strong> this has no training wheels, so be careful!
-</p>
+    <p>
+        Use the textarea below to write any SQL statement.
+        <strong class="warn">WARNING:</strong> this has no training wheels, so be careful!
+    </p>
 
-<ng-container *ngIf="!(sqlResult$ | async)">
-    <textarea class="sql" #sql></textarea>
-    <button mat-flat-button color="primary" (click)="execSql(sql.value)">Execute SQL</button>
-</ng-container>
-<ng-container *ngIf="sqlResult$ | async; let result">
-    <textarea class="sql">{{result|json}}</textarea>
-    <button mat-flat-button color="primary" (click)="clearSql()">Clear Results</button>
+    <ng-container *ngIf="!(sqlResult$ | async)">
+        <textarea class="sql" #sql></textarea>
+        <button mat-flat-button color="primary" (click)="execSql(sql.value)">Execute SQL</button>
+    </ng-container>
+    <ng-container *ngIf="sqlResult$ | async; let result">
+        <textarea class="sql">{{result|json}}</textarea>
+        <button mat-flat-button color="primary" (click)="clearSql()">Clear Results</button>
+    </ng-container>
 </ng-container>

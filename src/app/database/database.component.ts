@@ -4,6 +4,7 @@ import { Observable, map, tap } from 'rxjs';
 
 import { ApiService } from 'src/app/services/api/api.service';
 import { ConfigurationData } from 'src/app/configuration/configuration.interface';
+import { ConfigurationService } from 'src/app/services/configuration/configuration.service';
 import { DatabaseList } from 'src/app/database/database.interface';
 import { DbService } from 'src/app/services/db/db.service';
 import { FlatTreeControl } from '@angular/cdk/tree';
@@ -29,15 +30,19 @@ export class DatabaseComponent implements OnInit {
     displayedColumns: string[] = [];
     sortedData: any[] = [];
     sqlResult$!: Observable<any> | null;
+    currentTableName = '';
+    enableAdvanced = false;
 
     constructor(
         private db: DbService,
         private api: ApiService,
+        private config: ConfigurationService,
     ) {}
 
     ngOnInit(): void {
         this.dbTables$ = this.db.getDatabaseTables();
         this.treeControl = new FlatTreeControl<DatabaseList>(() => 1, () => false);
+        this.enableAdvanced = this.config.getValue('PBYDB_ENABLE_ADVANCED') === 'true';
     }
 
     async sortData(sort: Sort) {
@@ -51,6 +56,7 @@ export class DatabaseComponent implements OnInit {
     }
 
     getData(tableName: string) {
+        this.currentTableName = tableName;
         switch (tableName) {
             case 'config':
                 this.tableData$ = this.api.getConfig().pipe(
@@ -264,6 +270,9 @@ export class DatabaseComponent implements OnInit {
         }
         this.tableDataSource = new MatTableDataSource(this.tableData$);
         this.displayedColumns = this.columns.map(c => c.columnDef);
+        if (this.currentTableName !== 'config') {
+            this.displayedColumns = this.displayedColumns.concat(['actions']);
+        }
     }
 
     clearData() {
@@ -276,6 +285,14 @@ export class DatabaseComponent implements OnInit {
 
     clearSql() {
         this.sqlResult$ = null;
+    }
+
+    delete(row: any) {
+        console.log('***** row', row);
+
+        // Delete record
+
+        // Filter results
     }
 
     private compare(a: number | string, b: number | string, isAsc: boolean) {
