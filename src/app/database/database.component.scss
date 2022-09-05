@@ -11,8 +11,8 @@
             margin-bottom: 25px;
         }
 
-        button {
-            width: 100%;
+        button[mat-stroked-button] {
+            width: 110px;
         }
     }
 }
@@ -22,14 +22,51 @@
 }
 
 .sql {
-    width: 100%;
+    min-width: 100%;
     min-height: 200px;
+
+    &[readonly] {
+        background-color: #EEE;
+        color: #666;
+        cursor: default;
+    }
 }
 
 tr.mat-header-row {
     position: sticky;
     top: 0;
 }
+
+$widths: (
+    "w2-5pc": (
+        width: 2.5%
+    ),
+    "w5pc": (
+        width: 5%
+    ),
+    "w10pc": (
+        width: 10%
+    ),
+    "w15pc": (
+        width: 15%
+    ),
+    "w20pc": (
+        width: 20%
+    ),
+    "w45pc": (
+        width: 45%
+    )
+);
+
+@mixin width-classes {
+    @each $key, $val in $widths {
+        .#{$key} {
+            width: #{map-get($val, width)}
+        }
+    }
+}
+
+@include width-classes();
 
 @media (min-width: 768px) {
     .container {

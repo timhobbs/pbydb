@@ -1,6 +1,3 @@
-import { NumberLiteralType } from "typescript";
-import { StarRatingConfig } from "angular-star-rating";
-
 export interface DatabaseList {
     name: string;
 }

@@ -9,7 +9,12 @@
     <div class="tree">
         <mat-tree [dataSource]="dbTables$" [treeControl]="treeControl">
             <mat-tree-node *matTreeNodeDef="let table">
-                <button mat-button (click)="getData(table.name)">{{table.name}}</button>
+                <button mat-stroked-button (click)="getData(table.name)">{{table.name}}</button>
+                <ng-container *ngIf="enableAdvanced">
+                    <button mat-icon-button (click)="dropTable(table.name)" color="warn">
+                        <mat-icon>clear</mat-icon>
+                    </button>
+                </ng-container>
             </mat-tree-node>
         </mat-tree>
         <button *ngIf="tableData$ | async" (click)="clearData()" mat-flat-button color="warn">
@@ -24,19 +29,21 @@
         (matSortChange)="sortData($event)"
         #tableSort="matSort">
         <ng-container *ngFor="let column of columns" [matColumnDef]="column.columnDef">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="{{column.columnDef}}">{{column.header}}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="{{column.columnDef}}" class="{{column.css}}">{{column.header}}</th>
             <td mat-cell *matCellDef="let row">{{column.cell(row)}}</td>
         </ng-container>
 
         <ng-container *ngIf="currentTableName !== 'config'" matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <th mat-header-cell *matHeaderCellDef class="w5pc">Actions</th>
             <td mat-cell *matCellDef="let row">
                 <button mat-icon-button color="warn" (click)="delete(row)"><mat-icon>delete</mat-icon></button>
             </td>
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;">
+            <td mat-cell *matCellDef="let i = index" [attr.name]="row[i]" class="cell-class">{{row[i]}}</td>
+        </tr>
 
         <mat-paginator showFirstLastButtons #tablePaginator
             [pageSizeOptions]="[10, 25, 50]"
@@ -53,12 +60,11 @@
         <strong class="warn">WARNING:</strong> this has no training wheels, so be careful!
     </p>
 
-    <ng-container *ngIf="!(sqlResult$ | async)">
-        <textarea class="sql" #sql></textarea>
-        <button mat-flat-button color="primary" (click)="execSql(sql.value)">Execute SQL</button>
-    </ng-container>
-    <ng-container *ngIf="sqlResult$ | async; let result">
-        <textarea class="sql">{{result|json}}</textarea>
-        <button mat-flat-button color="primary" (click)="clearSql()">Clear Results</button>
-    </ng-container>
+<ng-container *ngIf="!sql">
+    <textarea class="sql" #sql></textarea>
+    <button mat-flat-button color="primary" (click)="execSql(sql.value)">Execute SQL</button>
+</ng-container>
+<ng-container *ngIf="sql">
+    <textarea *ngIf="sqlResult$ | async as result;" class="sql" readonly>{{result|json}}</textarea>
+    <button mat-flat-button color="primary" (click)="clearSql()">Clear Results</button>
 </ng-container>
