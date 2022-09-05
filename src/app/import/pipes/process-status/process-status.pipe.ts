@@ -12,16 +12,12 @@ export class ProcessStatusPipe implements PipeTransform {
         private db: DbService,
     ) {}
 
-    transform(status: any): string {
+    transform(status: any): void {
         console.log('***** status', status);
         if (status.success) {
             this.db.addResolved(status.msg);
         } else {
             this.db.addRejected(status.msg);
         }
-
-        this.previousStatus += (status.success ? 'RESOLVED' : 'REJECTED') + ': ' + status.msg.join(',') + '\n';
-
-        return this.previousStatus;
     }
 }
