@@ -39,10 +39,8 @@
         (click)="import('vps')"
     >Import</button>
 </p>
-<div *ngIf="dbTotal$ | async; let total">
+<div *ngIf="dbTotal$ | async as total">
     <h3>Processed: {{processed}}/{{total}}</h3>
-    <div class="status" *ngIf="dbStatus$ | async | processStatus; let status">
-        <mat-progress-bar mode="determinate" [value]="total | processPercentage:processed"></mat-progress-bar>
-        <textarea #textarea [scrollTop]="textarea.scrollHeight">{{ status }}</textarea>
-    </div>
+    <mat-progress-bar mode="determinate" [value]="total | processPercentage:processed"></mat-progress-bar>
+    <ng-container *ngIf="dbStatus$ | async | processStatus"></ng-container>
 </div>

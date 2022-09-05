@@ -3,7 +3,6 @@ import { Component, OnInit } from '@angular/core';
 import { ApiService } from 'src/app/services/api/api.service';
 import { DbService } from 'src/app/services/db/db.service';
 import { Observable } from 'rxjs';
-import { Table } from 'src/app/table/table.interface';
 
 @Component({
     selector: 'app-import',
@@ -29,7 +28,6 @@ export class ImportComponent implements OnInit {
     }
 
     import(type = 'vpx') {
-
         const file = this.fileInput ?? null;
         this.api.import(type, file).subscribe((tables: any[]) => {
             if (type === 'vpx') {
