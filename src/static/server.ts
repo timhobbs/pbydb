@@ -236,20 +236,12 @@ where id = 1`;
 });
 
 // Get database table list
-app.get(`${apiBase}/db`, (req, res, next) => {
-    const sql = `
-select name from sqlite_schema
-where type = 'table' and name not like 'sqlite_%'`;
-
-    db.all(sql, (err, rows) => {
-        if (err) {
-            console.error(`DB error: ${err.message}`);
-
-            return res.status(500).send(err.message);
-        }
-
-        return res.send(rows);
-    });
+app.get(`${apiBase}/db`, async (req, res, next) => {
+    try {
+        return res.send(await getTableList());
+    } catch (error: any) {
+        return res.status(500).send(error.message);
+    }
 });
 
 // Get VPS lookup
@@ -283,9 +275,71 @@ app.post(`${apiBase}/sql`, async (req, res, next) => {
     });
 });
 
+// Execute delete
+app.delete(`${apiBase}/delete/:table/:id`, async (req, res, next) => {
+    db.all(`delete from ${req.params.table} where id = ${req.params.id}`, (err, rows) => {
+        if (err) {
+            console.error(`DB delete error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        return res.send(rows);
+    });
+});
+
+// Drop table
+app.delete(`${apiBase}/drop/:table`, async (req, res, next) => {
+    try {
+        const tables = await getTableList() as any[];
+        const table: any = tables.find((tableInfo) => {
+            return tableInfo.name === req.params.table;
+        });
+
+        const sql: string[] = [
+            `drop table ${table.name}`,
+            table.sql
+        ];
+
+        if (table.name === 'config') {
+            sql.push(`insert into config ( vpxdb, vpxtables ) values ('', '')`);
+        }
+
+        return db.exec(sql.join('; '), (err) => {
+            if (err) {
+                console.error(`DB delete error: ${err.message}`);
+
+                return res.status(500).send(err.message);
+            }
+
+            return res.send({});
+        });
+    } catch (error: any) {
+        return res.status(500).send(error.message);
+    }
+});
+
 // ****************************************************************************
 // Methods
 // ****************************************************************************
+
+function getTableList() {
+    return new Promise((resolve, reject) => {
+        const sql = `
+select * from sqlite_schema
+where type = 'table' and name not like 'sqlite_%'`;
+
+        db.all(sql, (err, rows) => {
+            if (err) {
+                console.error(`DB error: ${err.message}`);
+
+                return reject(err.message);
+            }
+
+            return resolve(rows);
+        });
+    });
+}
 
 function createTablesTable(db: sqlite3.Database) {
     db.exec(
@@ -367,7 +421,7 @@ function createVpslookupTable(db: sqlite3.Database) {
             GAMEVER text,
             Rom text,
             Tags text,
-            VPSID text unique
+            VPSID text not null unique
         )`,
         (err) => {
             if (err) {
@@ -509,29 +563,23 @@ function updateVpslookupTable(data: string[][]) {
                 }, []).join(',')
             }) values ${placeholder}`;
 
-            const promises: Promise<sqlite3.RunResult>[] = [];
-            data.forEach((params, index) => {
-                const p = new Promise<sqlite3.RunResult>((resolve, reject) => {
+            data.reduce(async (acc, params: string[], index: number) => {
+                console.log('***** params', index, (params || [])[0]);
+                await acc;
+                return new Promise<any>((resolve, reject) => {
                     db.run(insert, params, function (err) {
                         if (err) {
-                            io.emit('record-status', { success: false, msg: err.message });
+                            io.emit('record-status', { success: false, msg: err.message, index: index });
 
-                            return reject(err);
+                            return resolve(err);
                         }
 
-                        io.emit('record-status', { success: true, msg: params });
+                        io.emit('record-status', { success: true, msg: params.join(','), index: index });
 
                         return resolve(this);
                     });
                 });
-                promises.push(p);
-            });
-
-            const promiseResults: any[] = [];
-            Promise.allSettled(promises)
-                .then((results) => {
-                    promiseResults.push(results);
-                });
+            }, Promise.resolve());
 
             return resolve();
         } catch (err) {
