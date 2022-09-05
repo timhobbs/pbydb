@@ -2,7 +2,7 @@
 <p *ngIf="showmsg" class="warn">
     Before you can use the app you must provide at least the PBY DB file path.
 </p>
-<ng-container *ngIf=" config$ | async; let config">
+<ng-container *ngIf=" config$ | async as config">
     <ng-container *ngIf="config; else none">
         <form #cfgForm="ngForm" class="details" (ngSubmit)="submit(config)">
             <p>

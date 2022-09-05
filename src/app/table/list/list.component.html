@@ -9,7 +9,7 @@
         </button>
     </span>
 </header>
-<ng-container *ngIf="tables$ | async; let tables">
+<ng-container *ngIf="tables$ | async as tables">
     <ng-container *ngIf="tables.length; else none">
         <div class="filter-results">
             <mat-form-field appearance="fill">
