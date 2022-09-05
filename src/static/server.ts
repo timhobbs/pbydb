@@ -538,7 +538,7 @@ async function importVpslookup(req: express.Request, res: express.Response) {
             });
         });
         await updateVpslookupTable(data);
-        const result = { data };
+        const result = { total: data.length };
 
         return res.send(result);
     } catch (err: any) {

@@ -35,7 +35,7 @@
     <button
         mat-flat-button
         color="primary"
-        [disabled]="!fileInput?.name"
+        [disabled]="!fileInput?.name || incomplete"
         (click)="import('vps')"
     >Import</button>
 </p>

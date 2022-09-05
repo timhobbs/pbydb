@@ -14,6 +14,7 @@ export class DbService {
     private resolved: string[] = [];
     private rejected: string[] = [];
     private processed$ = new BehaviorSubject(0);
+    private total$ = new BehaviorSubject(0);
 
     get resolvedRecords() {
         return this.resolved;
@@ -40,16 +41,22 @@ export class DbService {
         return this.processed$.asObservable();
     }
 
+    getProcessedTotal(): Observable<number> {
+        return this.total$.asObservable();
+    }
+
     // Called via the process-status pipe
     addResolved(data: string): void {
         this.resolved.push(data);
         this.processed$.next(this.processed$.value + 1);
+        this.updateTotal();
     }
 
     // Called via the process-status pipe
     addRejected(data: string): void {
         this.rejected.push(data);
         this.processed$.next(this.processed$.value + 1);
+        this.updateTotal();
     }
 
     clearRecords(): void {
@@ -77,5 +84,9 @@ export class DbService {
 
     dropTable(tableName: string) {
         return this.http.delete(`${API_BASE}/drop/${tableName}`) as Observable<any[]>;
+    }
+
+    private updateTotal() {
+        this.total$.next(this.resolved.length + this.rejected.length);
     }
 }
