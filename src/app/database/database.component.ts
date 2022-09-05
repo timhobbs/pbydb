@@ -172,42 +172,42 @@ export class DatabaseComponent implements OnInit {
                     },
                     {
                         columnDef: 'GameFileName',
-                        header: 'VGameFileNamePXDb',
+                        header: 'Game File Name',
                         cell: (element: Vpslookup) => `${element.GameFileName}`,
                     },
                     {
                         columnDef: 'GameName',
-                        header: 'GameName',
+                        header: 'Game Name',
                         cell: (element: Vpslookup) => `${element.GameName}`,
                     },
                     {
                         columnDef: 'GameDisplay',
-                        header: 'GameDisplay',
+                        header: 'Game Display',
                         cell: (element: Vpslookup) => `${element.GameDisplay}`,
                     },
                     {
                         columnDef: 'MediaSearch',
-                        header: 'MediaSearch',
+                        header: 'Media Search',
                         cell: (element: Vpslookup) => `${element.MediaSearch}`,
                     },
                     {
                         columnDef: 'Manufact',
-                        header: 'Manufact',
+                        header: 'Manufacturer',
                         cell: (element: Vpslookup) => `${element.Manufact}`,
                     },
                     {
                         columnDef: 'GameYear',
-                        header: 'GameYear',
+                        header: 'Game Year',
                         cell: (element: Vpslookup) => `${element.GameYear}`,
                     },
                     {
                         columnDef: 'NumPlayers',
-                        header: 'NumPlayers',
+                        header: 'Num Players',
                         cell: (element: Vpslookup) => `${element.NumPlayers}`,
                     },
                     {
                         columnDef: 'GameType',
-                        header: 'GameType',
+                        header: 'Game Type',
                         cell: (element: Vpslookup) => `${element.GameType}`,
                     },
                     {
@@ -217,27 +217,27 @@ export class DatabaseComponent implements OnInit {
                     },
                     {
                         columnDef: 'GameTheme',
-                        header: 'GameTheme',
+                        header: 'Game Theme',
                         cell: (element: Vpslookup) => `${element.GameTheme?.split(',')}`,
                     },
                     {
                         columnDef: 'WebLinkURL',
-                        header: 'WebLinkURL',
+                        header: 'Web Link URL',
                         cell: (element: Vpslookup) => `${element.WebLinkURL}`,
                     },
                     {
                         columnDef: 'IPDBNum',
-                        header: 'IPDBNum',
+                        header: 'IPDB#',
                         cell: (element: Vpslookup) => `${element.IPDBNum}`,
                     },
                     {
                         columnDef: 'AltRunMode',
-                        header: 'AltRunMode',
+                        header: 'Alt Run Mode',
                         cell: (element: Vpslookup) => `${element.AltRunMode}`,
                     },
                     {
                         columnDef: 'DesignedBy',
-                        header: 'DesignedBy',
+                        header: 'Designed By',
                         cell: (element: Vpslookup) => `${element.DesignedBy?.split(',')}`,
                     },
                     {
@@ -247,12 +247,12 @@ export class DatabaseComponent implements OnInit {
                     },
                     {
                         columnDef: 'GAMEVER',
-                        header: 'GAMEVER',
+                        header: 'Game Version',
                         cell: (element: Vpslookup) => `${element.GAMEVER}`,
                     },
                     {
                         columnDef: 'Rom',
-                        header: 'Rom',
+                        header: 'ROM',
                         cell: (element: Vpslookup) => `${element.Rom}`,
                     },
                     {
@@ -262,7 +262,7 @@ export class DatabaseComponent implements OnInit {
                     },
                     {
                         columnDef: 'VPSID',
-                        header: 'VPSID',
+                        header: 'VPS ID',
                         cell: (element: Vpslookup) => `${element.VPSID}`,
                     },
                 ];
