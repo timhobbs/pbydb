@@ -1,8 +1,9 @@
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { DatabaseList, Vpslookup } from 'src/app/database/database.interface';
 
 import { API_BASE } from 'src/app/app.constants';
 import { HttpClient } from '@angular/common/http';
+import { ImportVpslookupStatus } from 'src/app/import/import.constants';
 import { Injectable } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
 
@@ -10,8 +11,8 @@ import { Socket } from 'ngx-socket-io';
     providedIn: 'root',
 })
 export class DbService {
-    private resolved: string[][] = [];
-    private rejected: string[][] = [];
+    private resolved: string[] = [];
+    private rejected: string[] = [];
     private processed$ = new BehaviorSubject(0);
 
     get resolvedRecords() {
@@ -31,7 +32,7 @@ export class DbService {
         return this.socket.fromEvent('record-total');
     }
 
-    getStatus(): Observable<string[]> {
+    getStatus(): Observable<ImportVpslookupStatus> {
         return this.socket.fromEvent('record-status');
     }
 
@@ -39,12 +40,14 @@ export class DbService {
         return this.processed$.asObservable();
     }
 
-    addResolved(data: string[]): void {
+    // Called via the process-status pipe
+    addResolved(data: string): void {
         this.resolved.push(data);
         this.processed$.next(this.processed$.value + 1);
     }
 
-    addRejected(data: string[]): void {
+    // Called via the process-status pipe
+    addRejected(data: string): void {
         this.rejected.push(data);
         this.processed$.next(this.processed$.value + 1);
     }
@@ -66,5 +69,13 @@ export class DbService {
 
     executeSql(sql: string): Observable<any> {
         return this.http.post(`${API_BASE}/sql`, { sql }) as Observable<any>;
+    }
+
+    deleteRecord(tableName: string, id: number): Observable<any[]> {
+        return this.http.delete(`${API_BASE}/delete/${tableName}/${id}`) as Observable<any[]>;
+    }
+
+    dropTable(tableName: string) {
+        return this.http.delete(`${API_BASE}/drop/${tableName}`) as Observable<any[]>;
     }
 }
