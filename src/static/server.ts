@@ -7,20 +7,18 @@ import * as morgan from 'morgan';
 import * as sqlite3 from 'sqlite3';
 
 import { Builder, parseString } from 'xml2js';
-import { upload, uploadPath } from './middleware/upload-file';
+import { NextFunction, Request, Response } from 'express';
 
-import { Response } from 'express';
 import { Server } from 'socket.io';
-import { parse } from 'csv-string';
+import { default as axios } from 'axios';
+import { parse as parseSync } from 'csv-parse/sync';
 
-// const vpxDbFile = `/mnt/f/Games/PinballY/Databases/Visual Pinball X/Visual Pinball X.xml`;
-// vps-db URL: https://fraesh.github.io/vps-db/vpsdb.json?ts=1661146191805
-// weeks URL: https://virtualpinballchat.com:6080/api/v1/weeks
 const apiBase = `/api`;
 const port = 3030;
 const pbydbPath = `${__dirname}/assets/db`;
 const pbydb = `${pbydbPath}/pbydb.db`;
 const logLevel = 'dev';
+const vpsDbUrl = `https://fraesh.github.io/vps-db/vpsdb.json?ts=${Date.now()}`;
 
 // ****************************************************************************
 // DB Init
@@ -29,9 +27,6 @@ const logLevel = 'dev';
 // Check for proper folders
 if (!fs.existsSync(pbydbPath)) {
     fs.mkdirSync(pbydbPath, { recursive: true });
-}
-if (!fs.existsSync(uploadPath)) {
-    fs.mkdirSync(uploadPath, { recursive: true });
 }
 
 // Create the DB if it doesn't exist
@@ -52,10 +47,11 @@ if (fs.existsSync(pbydb) === false) {
         return;
     });
 
-    // Create config table
+    // Create tables
     createConfigTable(db);
     createTablesTable(db);
     createVpslookupTable(db);
+    createStatsTable(db);
 
     // Close DB
     db.close();
@@ -145,6 +141,8 @@ app.post(`${apiBase}/import/:type?`, async (req, res, next) => {
             return await importVpslookup(req, res);
         case 'vpx':
             return await importVpx(res);
+        case 'stats':
+            return await importStats(res);
         default:
             return res.status(500);
     }
@@ -221,7 +219,8 @@ app.post(`${apiBase}/config`, (req, res, next) => {
     const sql = `
 update config set
 vpxdb = '${req.body.vpxdb}',
-vpxtables = '${req.body.vpxtables}'
+vpxtables = '${req.body.vpxtables}',
+vpxstats = '${req.body.vpxstats}'
 where id = 1`;
 
     db.run(sql, (err) => {
@@ -319,6 +318,9 @@ app.delete(`${apiBase}/drop/:table`, async (req, res, next) => {
     }
 });
 
+// Stats
+app.get(`${apiBase}/stats`, getStats);
+
 // ****************************************************************************
 // Methods
 // ****************************************************************************
@@ -373,7 +375,8 @@ function createConfigTable(db: sqlite3.Database) {
         `create table config (
             id integer primary key autoincrement,
             vpxdb text,
-            vpxtables text
+            vpxtables text,
+            vpxstats text
         )`,
         (err) => {
             if (err) {
@@ -422,6 +425,37 @@ function createVpslookupTable(db: sqlite3.Database) {
             Rom text,
             Tags text,
             VPSID text not null unique
+        )`,
+        (err) => {
+            if (err) {
+                console.error(`DB create error: ${err.message}`);
+
+                throw err;
+            }
+        }
+    );
+}
+
+function createStatsTable(db: sqlite3.Database) {
+    // Create table
+    db.exec(
+        `create table stats (
+            id integer primary key autoincrement,
+            Game text not null,
+            GameName text,
+            GameSystem text,
+            LastPlayed text,
+            PlayCount text,
+            PlayTime text,
+            IsFavorite text,
+            Rating text,
+            AudioVolume text,
+            Categories text,
+            IsHidden text,
+            DateAdded text,
+            HighScoreStyle text,
+            MarkedForCapture text,
+            ShowWhenRunning text
         )`,
         (err) => {
             if (err) {
@@ -513,49 +547,32 @@ async function getConfiguration(): Promise<any> {
 }
 
 async function importVpslookup(req: express.Request, res: express.Response) {
-    try {
-        // Upload the file
-        await upload(req, res);
+    const { data } = await axios.get(vpsDbUrl).then(db => db);
+    const vpxTables = data.filter((table: any) => table.features.includes('VPX'));
+    const lookupData = getVpslookupData(vpxTables);
+    console.log('***** lookupData.length', lookupData.length);
 
-        if (!req.file) {
-            return res.status(400).send('No file found!');
-        }
+    await updateVpslookupTable(lookupData);
+    const result = { total: lookupData.length };
 
-        // Now read the file
-        const filePath = `${uploadPath}/${req.file.originalname}`;
-        const data = await new Promise<string[][]>((resolve, reject) => {
-            fs.readFile(filePath, 'utf8', (err, data) => {
-                if (err) {
-                    console.error(`FS error: ${err.message}`);
+    return res.send(result);
 
-                    reject(err.message);
-                }
-
-                const dataRows = data.split('\n');
-                const parsedData = dataRows.map(row => parse(row)[0]);
-
-                resolve(parsedData);
-            });
-        });
-        await updateVpslookupTable(data);
-        const result = { total: data.length };
-
-        return res.send(result);
-    } catch (err: any) {
-        return res.status(500).send(err);
-    }
 }
 
 function updateVpslookupTable(data: string[][]) {
+    return importFromCsv('vpslookup', data);
+}
+
+function importFromCsv(tableName: string, data: string[][]) {
     return new Promise<void>((resolve, reject) => {
         try {
-            const firstRow = data.shift() || [];
+            // Get column names - replace spaces/dashes in names
+            const firstRow = (data.shift() || []).map((col: string) => col.replace(/\s/g, '').replace(/-/g, ''));
 
-            console.log(`***** rows`, data.length);
             io.emit('record-total', data.length);
 
             const placeholder = `(${firstRow.map((col: any) => '?').join(',')})`;
-            const insert =  `insert into vpslookup (${
+            const insert =  `insert into ${tableName} (${
                 firstRow.reduce((row: string[], column: string) => {
                     row.push(column.replace('-', ''));
 
@@ -564,7 +581,6 @@ function updateVpslookupTable(data: string[][]) {
             }) values ${placeholder}`;
 
             data.reduce(async (acc, params: string[], index: number) => {
-                console.log('***** params', index, (params || [])[0]);
                 await acc;
                 return new Promise<any>((resolve, reject) => {
                     db.run(insert, params, function (err) {
@@ -586,4 +602,127 @@ function updateVpslookupTable(data: string[][]) {
             return reject(err);
         }
     });
+}
+
+function getStats(req: Request, res: Response, next: NextFunction) {
+    db.all('select * from stats', async (err, rows) => {
+        if (err) {
+            console.error(`DB get error: ${err.message}`);
+
+            return res.status(500).send(err.message);
+        }
+
+        console.log('***** rows', rows.length);
+
+        return res.send(rows);
+    });
+}
+
+async function importStats(res: Response) {
+    const { vpxstats, error } = await getConfiguration();
+    if (!vpxstats) {
+        return res.status(500).send(error);
+    }
+
+    try {
+        return new Promise(async (resolve, reject) => {
+            const data = await parseCsv(vpxstats, 'utf16le', 'windows-1252');
+            await importFromCsv('stats', data)
+            const result = { total: data.length };
+            resolve(result);
+        });
+    } catch (err: any) {
+        return res.status(500).send(err);
+    }
+}
+
+function parseCsv(filename: string, readEncoding: BufferEncoding = 'utf8', encoding: string = 'utf8') {
+    return new Promise<string[][]>((resolve, reject) => {
+        fs.readFile(filename, readEncoding, (err, data: Buffer | string) => {
+            if (err) {
+                console.error(`FS error: ${err.message}`);
+
+                reject(err.message);
+            }
+
+            if (encoding !== 'utf8') {
+                // Decode
+                data = iconv.decode(data as Buffer, encoding);
+
+                // BOM check
+                const bomCheck = data.slice(0, 1);
+                if (bomCheck === 'ÿ') {
+                    data = data.slice(1);
+                }
+
+                // Remove return carriage
+                data = data.replace(/\r/g, '');
+            }
+
+            const options = {
+                bom: true,
+                relax_column_count: true,
+                skip_empty_lines: true,
+                relax_quotes: true,
+                record_delimiter: '\n',
+            };
+
+            const dataRows = (data as string).split('\n');
+            const parsedData = dataRows.map(row => parseSync(row, options)[0])
+                .map((row, index) => {
+                    if (index === 0) {
+                        row.splice(1, 0, 'GameName');
+                        row.splice(2, 0, 'GameSystem');
+                    } else if (row && row.length) {
+                        const lastDot = row[0].lastIndexOf('.');
+                        const name = row[0].slice(0, lastDot);
+                        const system = row[0].slice(lastDot + 1);
+                        row.splice(1, 0, name);
+                        row.splice(2, 0, system);
+                    }
+
+                    return row;
+                });
+
+            resolve(parsedData);
+        });
+    });
+}
+
+// ****************************************************************************
+// From vps app
+// ****************************************************************************
+
+function getVpslookupData(r: any[]) {
+    const ho = ["GameFileName", "GameName", "GameDisplay", "MediaSearch", "Manufact", "GameYear", "NumPlayers", "GameType", "Category", "GameTheme", "WebLinkURL", "IPDBNum", "AltRunMode", "DesignedBy", "Author", "GAMEVER", "Rom", "Tags", "VPS-ID"];
+    const t = { theAtEnd: true, author: true, version: true, mod: true, ssf: true, vr: true };
+    let n = [ho];
+    r.sort((o,a)=>a.name > o.name ? -1 : 1)
+    .forEach(o=>{
+        let a: any[];
+        (a = getGameFileName(o, t)) == null || a.forEach(([i, l])=>{
+            let h, x, g, p, C, b;
+            const d = getGameFileName(o, {
+                theAtEnd: t.theAtEnd
+            })[0][0];
+            const u = [`${l.gameFileName || i}`, `${d}`, `${d}`, "", o.manufacturer || "", ((h = o.year) == null ? void 0 : h.toString()) || "", ((x = o.players) == null ? void 0 : x.toString()) || "", o.type || "", "", arrayToString(o.theme), ((g = o.ipdbUrl) == null ? void 0 : g.includes(".ipdb.org/machine.cgi?id=")) ? `"${o.ipdbUrl}"` : "", ((p = o.ipdbUrl) == null ? void 0 : p.includes(".ipdb.org/machine.cgi?id=")) ? o.ipdbUrl.split(".cgi?id=")[1] : "", "", arrayToString(o.designers), arrayToString(l.authors), l.version || "", ((C = o.romFiles) == null ? void 0 : C.length) && o.romFiles[0].version || "", arrayToString((b = l.features) == null ? void 0 : b.filter((w: any)=>!["incl. B2S", "incl. ROM", "incl. Art", "incl. PuP", "incl. Video", "no ROM"].includes(w))), l.id];
+            n.push(u)
+        });
+    });
+
+    return n;
+}
+
+function getGameFileName(r: any, t: any) {
+    let o;
+    let n = r.name;
+    return t.theAtEnd && r.name.slice(0, 4).toLowerCase() === "the " && (n = `${n.slice(4).trim()}, The`),
+    ((o = r.tableFiles) == null ? void 0 : o.map((a: any)=>{
+        let i, l, d, u;
+        return [`${n} (${r.manufacturer} ${r.year})${t.author && ((i = a.authors) == null ? void 0 : i.length) ? ` ${a.authors[0]}` : ""}${t.version ? ` ${a.version || ""}` : ""}${t.ssf && ((l = a.features) == null ? void 0 : l.includes("SSF")) ? " SSF" : ""}${t.mod && ((d = a.features) == null ? void 0 : d.includes("MOD")) ? " MOD" : ""}${t.vr && ((u = a.features) == null ? void 0 : u.includes("VR")) ? " VR" : ""}`, a]
+    })) || []
+}
+
+function arrayToString(r: any) {
+    (r == null ? void 0 : r.length) ? `"${r.join(", ")}"` : "";
 }
