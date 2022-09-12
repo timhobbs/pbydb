@@ -1,6 +1,7 @@
+import { Stats, Vpslookup } from "src/app/database/database.interface";
+
 import { ConfigurationData } from "src/app/configuration/configuration.interface";
 import { Table } from "src/app/table/table.interface";
-import { Vpslookup } from "src/app/database/database.interface";
 
 export const CONFIG_COLUMNS = [
     {
@@ -217,6 +218,105 @@ export const VPSLOOKUP_COLUMNS= [
         columnDef: 'VPSID',
         header: 'VPS ID',
         cell: (element: Vpslookup) => `${element.VPSID}`,
+        css: 'w2-5pc',
+    },
+];
+
+export const STATS_COLUMNS= [
+    {
+        columnDef: 'id',
+        header: 'ID',
+        cell: (element: Stats) => `${element.id}`,
+        css: 'w2-5pc',
+    },
+    {
+        columnDef: 'Game',
+        header: 'Game',
+        cell: (element: Stats) => `${element.Game}`,
+        css: 'w20pc',
+    },
+    {
+        columnDef: 'GameName',
+        header: 'Game Name',
+        cell: (element: Stats) => `${element.GameName}`,
+        css: 'w10pc',
+    },
+    {
+        columnDef: 'GameSystem',
+        header: 'Game System',
+        cell: (element: Stats) => `${element.GameSystem}`,
+        css: 'w10pc',
+    },
+    {
+        columnDef: 'LastPlayed',
+        header: 'Last Played',
+        cell: (element: Stats) => `${element.LastPlayed}`,
+        css: 'w10pc',
+    },
+    {
+        columnDef: 'PlayCount',
+        header: 'PlayCount',
+        cell: (element: Stats) => `${element.PlayCount}`,
+        css: 'w5pc',
+    },
+    {
+        columnDef: 'PlayTime',
+        header: 'Play Time',
+        cell: (element: Stats) => `${element.PlayTime}`,
+        css: 'w5pc',
+    },
+    {
+        columnDef: 'IsFavorite',
+        header: 'Is Favorite',
+        cell: (element: Stats) => `${element.IsFavorite}`,
+        css: 'w2-5pc',
+    },
+    {
+        columnDef: 'Rating',
+        header: 'Rating',
+        cell: (element: Stats) => `${element.Rating}`,
+        css: 'w5pc',
+    },
+    {
+        columnDef: 'AudioVolume',
+        header: 'Audio Volume',
+        cell: (element: Stats) => `${element.AudioVolume}`,
+        css: 'w5pc',
+    },
+    {
+        columnDef: 'Categories',
+        header: 'Categories',
+        cell: (element: Stats) => `${element.Categories}`,
+        css: 'w20pc',
+    },
+    {
+        columnDef: 'IsHidden',
+        header: 'Is Hidden',
+        cell: (element: Stats) => `${element.IsHidden}`,
+        css: 'w2-5pc',
+    },
+    {
+        columnDef: 'DateAdded',
+        header: 'Date Added',
+        cell: (element: Stats) => `${element.DateAdded ?? ''}`,
+        css: 'w5pc',
+    },
+    {
+        columnDef: 'HighScoreStyle',
+        header: 'High Score Style',
+        cell: (element: Stats) => `${element.HighScoreStyle ?? ''}`,
+        css: 'w2-5pc',
+    },
+    {
+        columnDef: 'MarkedForCapture',
+        header: 'MarkedForCapture',
+        cell: (element: Stats) => `${element.MarkedForCapture ?? ''}`,
+        css: 'w2-5pc',
+    },
+    {
+        columnDef: 'ShowWhenRunning',
+        header: 'Show When Running',
+        cell: (element: Stats) => `${element.ShowWhenRunning ?? ''}`,
         css: 'w2-5pc',
     },
 ];

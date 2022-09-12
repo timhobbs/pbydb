@@ -1,12 +1,12 @@
-import { CONFIG_COLUMNS, TABLE_COLUMNS, VPSLOOKUP_COLUMNS } from 'src/app/database/database.constants';
+import { CONFIG_COLUMNS, STATS_COLUMNS, TABLE_COLUMNS, VPSLOOKUP_COLUMNS } from 'src/app/database/database.constants';
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { DatabaseList, Stats } from 'src/app/database/database.interface';
 import { MatSort, Sort } from '@angular/material/sort';
 import { Observable, filter, map, tap } from 'rxjs';
 
 import { ApiService } from 'src/app/services/api/api.service';
 import { ConfigurationData } from 'src/app/configuration/configuration.interface';
 import { ConfigurationService } from 'src/app/services/configuration/configuration.service';
-import { DatabaseList } from 'src/app/database/database.interface';
 import { DbService } from 'src/app/services/db/db.service';
 import { FlatTreeControl } from '@angular/cdk/tree';
 import { MatPaginator } from '@angular/material/paginator';
@@ -90,6 +90,16 @@ export class DatabaseComponent implements OnInit {
                     })
                 );
                 this.columns = VPSLOOKUP_COLUMNS;
+                break;
+            case 'stats':
+                this.tableData$ = this.db.getStats().pipe(
+                    tap((data: Stats[]) => {
+                        this.tableDataSource.data = data;
+                        this.tableDataSource.sort = this.tableSort;
+                        this.tableDataSource.paginator = this.tablePaginator;
+                    })
+                );
+                this.columns = STATS_COLUMNS;
                 break;
         }
         this.tableDataSource = new MatTableDataSource(this.tableData$);

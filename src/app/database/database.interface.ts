@@ -24,3 +24,22 @@ export interface Vpslookup {
     Tags: string | null;
     VPSID: string;
 }
+
+export interface Stats {
+    id: number;
+    Game: string;
+    GameName: string;
+    GameSystem: string;
+    LastPlayed: string;
+    PlayCount: string;
+    PlayTime: string;
+    IsFavorite: string;
+    Rating: string;
+    AudioVolume: string;
+    Categories: string;
+    IsHidden: string;
+    DateAdded: string;
+    HighScoreStyle: string;
+    MarkedForCapture: string;
+    ShowWhenRunning: string;
+}
