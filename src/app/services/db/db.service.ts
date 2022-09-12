@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
-import { DatabaseList, Vpslookup } from 'src/app/database/database.interface';
+import { DatabaseList, Stats, Vpslookup } from 'src/app/database/database.interface';
 
 import { API_BASE } from 'src/app/app.constants';
 import { HttpClient } from '@angular/common/http';
@@ -72,6 +72,10 @@ export class DbService {
 
     getVpslookup(): Observable<Vpslookup[]> {
         return this.http.get(`${API_BASE}/vpslookup`) as Observable<Vpslookup[]>;
+    }
+
+    getStats(): Observable<Stats[]> {
+        return this.http.get(`${API_BASE}/stats`) as Observable<Stats[]>;
     }
 
     executeSql(sql: string): Observable<any> {
