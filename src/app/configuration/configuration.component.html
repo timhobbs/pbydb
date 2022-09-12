@@ -17,6 +17,12 @@
                     <input matInput type="text" [(ngModel)]="config.vpxtables" name="vpxtables"/>
                 </mat-form-field>
             </p>
+            <p>
+                <mat-form-field appearance="fill">
+                    <mat-label>VPX Stats Path</mat-label>
+                    <input matInput type="text" [(ngModel)]="config.vpxstats" name="vpxstats"/>
+                </mat-form-field>
+            </p>
             <p class="button">
                 <button mat-flat-button color="primary">Update</button>
                 <button mat-flat-button color="warn" [routerLink]="['/']">Cancel</button>
