@@ -4,6 +4,7 @@ import { API_BASE } from 'src/app/app.constants';
 import { ConfigurationData } from 'src/app/configuration/configuration.interface';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Stats } from 'src/app/database/database.interface';
 import { Table } from 'src/app/table/table.interface';
 
 @Injectable({
@@ -40,5 +41,9 @@ export class ApiService {
 
     updateConfig(configuration: ConfigurationData): Observable<boolean | string> {
         return this.http.post(`${API_BASE}/config`, { ...configuration }) as Observable<boolean | string>;
+    }
+
+    getStats(): Observable<Stats[]> {
+        return this.http.get(`${API_BASE}/stats`) as Observable<Stats[]>;
     }
 }
