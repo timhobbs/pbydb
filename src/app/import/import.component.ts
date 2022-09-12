@@ -17,6 +17,9 @@ export class ImportComponent implements OnInit {
     processed = 0;
     totalImported = 0;
     incomplete = false;
+    showTables = false;
+    showStats = false;
+    showVpslookup = false;
 
     constructor(
         private api: ApiService,
@@ -33,8 +36,19 @@ export class ImportComponent implements OnInit {
     }
 
     import(type = 'vpx') {
-        const file = this.fileInput ?? null;
-        this.api.import(type, file).subscribe((results: any) => {
+        switch (type) {
+            case 'vpx':
+                this.showTables = true;
+                break;
+            case 'vps':
+                this.showVpslookup = true;
+                break;
+            case 'stats':
+                this.showStats = true;
+                break;
+        }
+
+        this.api.import(type).subscribe((results: any) => {
             if (type === 'vpx') {
                 this.results = results.length;
             }
@@ -43,6 +57,11 @@ export class ImportComponent implements OnInit {
 
     clear() {
         this.results = 0;
+        this.processed = 0;
+        this.totalImported = 0;
+        this.showTables = false;
+        this.showStats = false;
+        this.showVpslookup = false;
     }
 
     fileChanged($event: any) {

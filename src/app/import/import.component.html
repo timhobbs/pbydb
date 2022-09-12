@@ -10,7 +10,8 @@
     <button *ngIf="!results"
         mat-flat-button
         color="primary"
-        (click)="import()"
+        [disabled]="incomplete"
+        (click)="import('vpx')"
     >Import</button>
     <ng-container *ngIf="results">
         <p>{{results}} records imported!</p>
@@ -21,26 +22,54 @@
     </ng-container>
 </p>
 
-<h2>Import Spreadsheet Data</h2>
+<h2>Import Stats Data</h2>
 <p>
-    Import VPS data into the database. This will allow the app the add some functionality.
+    Import your game stats into the app's database.
 </p>
 <p class="form">
-    <mat-form-field>
-        <input type="file" accept=".csv" (change)="fileChanged($event)">
-        <mat-label>Select CSV file</mat-label>
-        <input matInput type="text" [value]="fileInput?.name">
-        <mat-icon matSuffix>cloud_upload</mat-icon>
-    </mat-form-field>
     <button
         mat-flat-button
         color="primary"
-        [disabled]="!fileInput?.name || incomplete"
+        [disabled]="incomplete"
+        (click)="import('stats')"
+    >Import</button>
+</p>
+<div [hidden]="!showStats">
+    <div *ngIf="dbTotal$ | async as total">
+        <h3>Processed: {{processed}}/{{total}}</h3>
+        <mat-progress-bar mode="determinate" [value]="total | processPercentage:processed"></mat-progress-bar>
+        <ng-container *ngIf="dbStatus$ | async | processStatus"></ng-container>
+        <p>
+            <button mat-flat-button
+                color="primary"
+                (click)="clear()"
+            >Clear</button>
+        </p>
+    </div>
+</div>
+
+<h2>Import VPS Data</h2>
+<p>
+    This will allow the app the add some functionality.
+</p>
+<p class="form">
+    <button
+        mat-flat-button
+        color="primary"
+        [disabled]="incomplete"
         (click)="import('vps')"
     >Import</button>
 </p>
-<div *ngIf="dbTotal$ | async as total">
-    <h3>Processed: {{processed}}/{{total}}</h3>
-    <mat-progress-bar mode="determinate" [value]="total | processPercentage:processed"></mat-progress-bar>
-    <ng-container *ngIf="dbStatus$ | async | processStatus"></ng-container>
+<div [hidden]="!showVpslookup">
+    <div *ngIf="dbTotal$ | async as total">
+        <h3>Processed: {{processed}}/{{total}}</h3>
+        <mat-progress-bar mode="determinate" [value]="total | processPercentage:processed"></mat-progress-bar>
+        <ng-container *ngIf="dbStatus$ | async | processStatus"></ng-container>
+        <p>
+            <button mat-flat-button
+                color="primary"
+                (click)="clear()"
+            >Clear</button>
+        </p>
+    </div>
 </div>
