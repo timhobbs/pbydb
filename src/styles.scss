@@ -67,3 +67,34 @@ body {
 .mat-form-field-suffix {
     align-self: flex-end;
 }
+
+$widths: (
+    "w2-5pc": (
+        width: 2.5%
+    ),
+    "w5pc": (
+        width: 5%
+    ),
+    "w10pc": (
+        width: 10%
+    ),
+    "w15pc": (
+        width: 15%
+    ),
+    "w20pc": (
+        width: 20%
+    ),
+    "w45pc": (
+        width: 45%
+    )
+);
+
+@mixin width-classes {
+    @each $key, $val in $widths {
+        .#{$key} {
+            width: #{map-get($val, width)}
+        }
+    }
+}
+
+@include width-classes();
