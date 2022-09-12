@@ -7,6 +7,7 @@ import { PageNotFoundComponent } from 'src/app/page-not-found/page-not-found.com
 
 const routes: Routes = [
     { path: 'table', canActivate: [HasConfigGuard], loadChildren: () => import('./table/table.module').then(m => m.TableModule) },
+    { path: 'stats', canActivate: [HasConfigGuard], loadChildren: () => import('./stats/stats.module').then(m => m.StatsModule) },
     { path: 'import', canActivate: [HasConfigGuard], loadChildren: () => import('./import/import.module').then(m => m.ImportModule) },
     { path: 'export', canActivate: [HasConfigGuard], loadChildren: () => import('./export/export.module').then(m => m.ExportModule) },
     { path: 'configuration', loadChildren: () => import('./configuration/configuration.module').then(m => m.ConfigurationModule) },
