@@ -13,6 +13,11 @@
         display: flex;
         flex-direction: row;
         gap: 10px;
+
+        button {
+            max-width: 350px;
+            width: 100%;
+        }
     }
 }
 
