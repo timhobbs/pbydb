@@ -50,7 +50,7 @@
     </ng-container>
 </div>
 
-<ng-container *ngIf="enableAdvanced">
+<div *ngIf="enableAdvanced" class="advanced">
     <h2>SQL</h2>
 
     <p>
@@ -58,11 +58,12 @@
         <strong class="warn">WARNING:</strong> this has no training wheels, so be careful!
     </p>
 
-<ng-container *ngIf="!sql">
-    <textarea class="sql" #sql></textarea>
-    <button mat-flat-button color="primary" (click)="execSql(sql.value)">Execute SQL</button>
-</ng-container>
-<ng-container *ngIf="sql">
-    <textarea *ngIf="sqlResult$ | async as result;" class="sql" readonly>{{result|json}}</textarea>
-    <button mat-flat-button color="primary" (click)="clearSql()">Clear Results</button>
-</ng-container>
+    <ng-container *ngIf="!sql">
+        <textarea class="sql" #sql></textarea>
+        <button mat-flat-button color="primary" (click)="execSql(sql.value)">Execute SQL</button>
+    </ng-container>
+    <ng-container *ngIf="sql">
+        <textarea *ngIf="sqlResult$ | async as result;" class="sql" readonly>{{result|json}}</textarea>
+        <button mat-flat-button color="primary" (click)="clearSql()">Clear Results</button>
+    </ng-container>
+</div>

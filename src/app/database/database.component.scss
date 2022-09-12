@@ -39,36 +39,12 @@ tr.mat-header-row {
     z-index: 1;
 }
 
-$widths: (
-    "w2-5pc": (
-        width: 2.5%
-    ),
-    "w5pc": (
-        width: 5%
-    ),
-    "w10pc": (
-        width: 10%
-    ),
-    "w15pc": (
-        width: 15%
-    ),
-    "w20pc": (
-        width: 20%
-    ),
-    "w45pc": (
-        width: 45%
-    )
-);
-
-@mixin width-classes {
-    @each $key, $val in $widths {
-        .#{$key} {
-            width: #{map-get($val, width)}
-        }
+.advanced {
+    button {
+        max-width: 350px;
+        width: 100%;
     }
 }
-
-@include width-classes();
 
 @media (min-width: 768px) {
     .container {

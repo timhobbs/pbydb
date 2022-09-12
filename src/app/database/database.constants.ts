@@ -3,6 +3,19 @@ import { Stats, Vpslookup } from "src/app/database/database.interface";
 import { ConfigurationData } from "src/app/configuration/configuration.interface";
 import { Table } from "src/app/table/table.interface";
 
+const toDate = (dateString: string) => {
+    const date = new Date(dateString.replace(
+        /^(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)$/,
+        '$4:$5:$6 $2/$3/$1'
+    ));
+    const options = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    }
+    return new Intl.DateTimeFormat('en-US', options as any).format(date);
+}
+
 export const CONFIG_COLUMNS = [
     {
         columnDef: 'id',
@@ -250,7 +263,7 @@ export const STATS_COLUMNS= [
     {
         columnDef: 'LastPlayed',
         header: 'Last Played',
-        cell: (element: Stats) => `${element.LastPlayed}`,
+        cell: (element: Stats) => `${element.LastPlayed ? toDate(element.LastPlayed) : ''}`,
         css: 'w10pc',
     },
     {
@@ -262,43 +275,43 @@ export const STATS_COLUMNS= [
     {
         columnDef: 'PlayTime',
         header: 'Play Time',
-        cell: (element: Stats) => `${element.PlayTime}`,
+        cell: (element: Stats) => `${element.PlayTime ?? ''}`,
         css: 'w5pc',
     },
     {
         columnDef: 'IsFavorite',
         header: 'Is Favorite',
-        cell: (element: Stats) => `${element.IsFavorite}`,
+        cell: (element: Stats) => `${element.IsFavorite ?? ''}`,
         css: 'w2-5pc',
     },
     {
         columnDef: 'Rating',
         header: 'Rating',
-        cell: (element: Stats) => `${element.Rating}`,
+        cell: (element: Stats) => `${element.Rating ?? ''}`,
         css: 'w5pc',
     },
     {
         columnDef: 'AudioVolume',
         header: 'Audio Volume',
-        cell: (element: Stats) => `${element.AudioVolume}`,
+        cell: (element: Stats) => `${element.AudioVolume ?? ''}`,
         css: 'w5pc',
     },
     {
         columnDef: 'Categories',
         header: 'Categories',
-        cell: (element: Stats) => `${element.Categories}`,
+        cell: (element: Stats) => `${element.Categories ?? ''}`,
         css: 'w20pc',
     },
     {
         columnDef: 'IsHidden',
         header: 'Is Hidden',
-        cell: (element: Stats) => `${element.IsHidden}`,
+        cell: (element: Stats) => `${element.IsHidden ?? ''}`,
         css: 'w2-5pc',
     },
     {
         columnDef: 'DateAdded',
         header: 'Date Added',
-        cell: (element: Stats) => `${element.DateAdded ?? ''}`,
+        cell: (element: Stats) => `${element.DateAdded ? toDate(element.DateAdded) : ''}`,
         css: 'w5pc',
     },
     {
@@ -309,7 +322,7 @@ export const STATS_COLUMNS= [
     },
     {
         columnDef: 'MarkedForCapture',
-        header: 'MarkedForCapture',
+        header: 'Marked For Capture',
         cell: (element: Stats) => `${element.MarkedForCapture ?? ''}`,
         css: 'w2-5pc',
     },
