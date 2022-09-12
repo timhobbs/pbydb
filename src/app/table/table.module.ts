@@ -6,6 +6,7 @@ import { ListComponent } from './list/list.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -15,12 +16,14 @@ import { NgModule } from '@angular/core';
 import { StarRatingModule } from 'angular-star-rating';
 import { TableFilterPipe } from './pipes/table-filter.pipe';
 import { TableRoutingModule } from 'src/app/table/table-routing.module';
+import { VpsResultComponent } from './vps-result/vps-result.component';
 
 @NgModule({
     declarations: [
         ListComponent,
         DetailComponent,
-        TableFilterPipe
+        TableFilterPipe,
+        VpsResultComponent
     ],
     imports: [
         CommonModule,
@@ -36,6 +39,7 @@ import { TableRoutingModule } from 'src/app/table/table-routing.module';
         MatIconModule,
         JsonPipe,
         StarRatingModule.forRoot(),
+        MatDialogModule,
     ],
 })
 export class TableModule {}

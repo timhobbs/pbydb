@@ -2,9 +2,11 @@ import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 
 import { ApiService } from 'src/app/services/api/api.service';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { Table } from 'src/app/table/table.interface';
+import { VpsResultComponent } from 'src/app/table/vps-result/vps-result.component';
 
 @Component({
     selector: 'app-detail',
@@ -18,6 +20,7 @@ export class DetailComponent implements OnInit {
         private api: ApiService,
         private activatedRoute: ActivatedRoute,
         private snackBar: MatSnackBar,
+        private dialog: MatDialog,
     ) {}
 
     ngOnInit(): void {
@@ -47,6 +50,18 @@ export class DetailComponent implements OnInit {
             }
 
             this.snackBar.open(message, 'Close', { duration: 3000 });
+        });
+    }
+
+    lookup(vpsid: string | undefined) {
+        if (!vpsid) {
+            return;
+        }
+
+        const dialogRef = this.dialog.open(VpsResultComponent, {
+            width: '500px',
+            height: '500px',
+            data: {},
         });
     }
 }

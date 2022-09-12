@@ -39,18 +39,19 @@
                 <input matInput type="number" [(ngModel)]="table.b2s" name="b2s"/>
             </mat-form-field>
         </p>
-        <p>
+        <p class="col-2">
             <mat-form-field appearance="fill">
                 <mat-label>VPSID</mat-label>
                 <input matInput type="text" [(ngModel)]="table.vpsid" name="vpsid"/>
             </mat-form-field>
+            <button mat-flat-button color="accent" type="button" (click)="lookup(table.vpsid)">Lookup</button>
         </p>
         <p>
             <mat-checkbox [(ngModel)]="table.haspup" name="haspup">Has PuP Pack?</mat-checkbox>
         </p>
         <p class="button">
-            <button mat-flat-button color="primary">Update</button>
-            <button mat-flat-button color="warn" [routerLink]="['/table']">Cancel</button>
+            <button mat-flat-button color="primary" type="submit">Update</button>
+            <button mat-flat-button color="warn" type="reset" [routerLink]="['/table']">Cancel</button>
         </p>
     </form>
 </ng-container>
