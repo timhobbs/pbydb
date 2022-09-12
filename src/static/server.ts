@@ -20,6 +20,8 @@ const pbydb = `${pbydbPath}/pbydb.db`;
 const logLevel = 'dev';
 const vpsDbUrl = `https://fraesh.github.io/vps-db/vpsdb.json?ts=${Date.now()}`;
 
+let vpsData: any;
+
 // ****************************************************************************
 // DB Init
 // ****************************************************************************
@@ -52,6 +54,9 @@ if (fs.existsSync(pbydb) === false) {
     createTablesTable(db);
     createVpslookupTable(db);
     createStatsTable(db);
+
+    // Create views
+    createTablestatsView(db);
 
     // Close DB
     db.close();
@@ -321,6 +326,30 @@ app.delete(`${apiBase}/drop/:table`, async (req, res, next) => {
 // Stats
 app.get(`${apiBase}/stats`, getStats);
 
+// Get VPS data
+app.get(`${apiBase}/vpsdata/:vpsid?`, async (req, res, next) => {
+    const vpsid = req.params.vpsid;
+    // Get data
+    const data = await getVpsdb();
+
+    // Return all data if no id param
+    if (!vpsid) {
+        return res.send(data);
+    }
+
+    // Find match
+    const match = data.filter((datum: any) => (datum.tableIds || []).includes(vpsid))
+
+    return res.send(match);
+});
+
+// Clear VPS cached data
+app.delete(`${apiBase}/vpsdata`, async (req, res, next) => {
+    vpsData = void 0;
+
+    return res.send({});
+});
+
 // ****************************************************************************
 // Methods
 // ****************************************************************************
@@ -467,6 +496,22 @@ function createStatsTable(db: sqlite3.Database) {
     );
 }
 
+function createTablestatsView(db: sqlite3.Database) {
+    // Create view
+    db.exec(
+        `create view tablestats as
+        select * from tables inner join stats
+        where tables.name = stats.gamename`,
+        (err) => {
+            if (err) {
+                console.error(`DB create error: ${err.message}`);
+
+                throw err;
+            }
+        }
+    );
+}
+
 async function importVpx(res: Response) {
     const { vpxdb, error } = await getConfiguration();
     if (!vpxdb) {
@@ -546,8 +591,38 @@ async function getConfiguration(): Promise<any> {
     });
 }
 
-async function importVpslookup(req: express.Request, res: express.Response) {
+async function getVpsdb() {
+    // Return from cache
+    if (vpsData) {
+        return vpsData;
+    }
+
+    // Get from API
     const { data } = await axios.get(vpsDbUrl).then(db => db);
+
+    // Process data
+    if (!data[0].tableIds || data[0].tableIds?.length === 0) {
+        data.forEach((datum: any) => {
+            if (!datum.tableFiles || datum.tableFiles.length === 0) {
+                return;
+            }
+
+            datum.tableIds = datum.tableFiles.reduce((acc: string[], table: any) => {
+                acc.push(table.id);
+
+                return acc;
+            }, []);
+        });
+    }
+
+    // Set cached
+    vpsData = data;
+
+    return data;
+}
+
+async function importVpslookup(req: express.Request, res: express.Response) {
+    const data = await getVpsdb();
     const vpxTables = data.filter((table: any) => table.features.includes('VPX'));
     const lookupData = getVpslookupData(vpxTables);
     console.log('***** lookupData.length', lookupData.length);
